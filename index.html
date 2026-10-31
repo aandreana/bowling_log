@@ -88,19 +88,23 @@
           <button onclick="selectGameTab(5)" id="gtab-5" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G5</button>
         </div>
 
-        <!-- Game Level Controls -->
-        <div class="grid grid-cols-2 gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs">
+        <!-- Game Level Controls & Scores -->
+        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs items-center">
           <div>
-            <label class="block text-[10px] text-slate-400 mb-0.5">Primary Ball Used</label>
-            <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+            <label class="block text-[9px] text-slate-400 mb-0.5">Primary Ball</label>
+            <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-xs text-slate-200">
               <option value="Viking Conquest">Viking Conquest</option>
               <option value="Zen Soul">Zen Soul</option>
               <option value="T-Zone / Spare Ball">T-Zone / Spare Ball</option>
             </select>
           </div>
-          <div class="flex flex-col justify-center items-end">
-            <span class="text-[10px] text-slate-400">Game Total</span>
+          <div class="flex flex-col items-center border-l border-r border-slate-800 px-1">
+            <span class="text-[9px] text-slate-400 uppercase tracking-wider">Score</span>
             <span id="active-game-score" class="text-base font-extrabold text-sky-400">0</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-[9px] text-amber-400 font-bold uppercase tracking-wider">Max Possible</span>
+            <span id="active-game-max-score" class="text-base font-black text-amber-400">300</span>
           </div>
         </div>
 
@@ -266,7 +270,7 @@
   <script>
     let activeGameIdx = 1;
     let gamesData = {};
-    let activeSessionId = null; // null means new, string/number means existing saved log
+    let activeSessionId = null;
 
     function initGamesData() {
       for (let g = 1; g <= 5; g++) {
@@ -324,8 +328,22 @@
 
     function updateFrameData(fIdx, field, val) {
       gamesData[activeGameIdx].frames[fIdx][field] = val;
+
+      // Reset Ball 2 if Ball 1 becomes Strike on frames 1-9
+      if (field === 'b1' && fIdx < 9 && val === 'X') {
+        gamesData[activeGameIdx].frames[fIdx].b2 = '';
+      }
+
+      renderActiveGameFrames();
       calculateScores();
       autoSave();
+    }
+
+    function buildOptions(optionsArray, selectedVal) {
+      return optionsArray.map(opt => {
+        const isSel = String(opt.val) === String(selectedVal) ? 'selected' : '';
+        return `<option value="${opt.val}" ${isSel}>${opt.label}</option>`;
+      }).join('');
     }
 
     function renderActiveGameFrames() {
@@ -335,6 +353,78 @@
 
       frames.forEach((f, idx) => {
         const is10th = idx === 9;
+
+        // Ball 1 options (all frames)
+        const b1Opts = [
+          { val: '', label: '-' },
+          { val: 'X', label: 'X (Strike)' },
+          { val: '0', label: '0 (Gutter)' },
+          { val: '1', label: '1 pin' },
+          { val: '2', label: '2 pins' },
+          { val: '3', label: '3 pins' },
+          { val: '4', label: '4 pins' },
+          { val: '5', label: '5 pins' },
+          { val: '6', label: '6 pins' },
+          { val: '7', label: '7 pins' },
+          { val: '8', label: '8 pins' },
+          { val: '9', label: '9 pins' }
+        ];
+
+        // Ball 2 options for frames 1-9
+        let b2Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
+        let b2Disabled = false;
+
+        if (!is10th) {
+          if (f.b1 === 'X') {
+            b2Disabled = true;
+            b2Opts = [{ val: '', label: '-' }];
+          } else if (f.b1 && f.b1 !== '0') {
+            const b1Num = parseInt(f.b1) || 0;
+            const maxRemaining = 9 - b1Num;
+            for (let p = 1; p <= maxRemaining; p++) {
+              b2Opts.push({ val: String(p), label: `${p} pin${p > 1 ? 's' : ''}` });
+            }
+          } else {
+            for (let p = 1; p <= 9; p++) {
+              b2Opts.push({ val: String(p), label: `${p} pins` });
+            }
+          }
+        } else {
+          // 10th frame Ball 2 options
+          if (f.b1 === 'X') {
+            b2Opts = b1Opts; // Can throw strike or 0-9
+          } else if (f.b1 && f.b1 !== '') {
+            b2Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
+            const b1Num = parseInt(f.b1) || 0;
+            const maxRemaining = 9 - b1Num;
+            for (let p = 1; p <= maxRemaining; p++) {
+              b2Opts.push({ val: String(p), label: `${p} pins` });
+            }
+          }
+        }
+
+        // Ball 3 options (10th frame only)
+        let b3Opts = [{ val: '', label: '-' }];
+        let b3Disabled = true;
+
+        if (is10th) {
+          if (f.b1 === 'X' || f.b2 === '/') {
+            b3Disabled = false;
+            if (f.b2 === 'X' || f.b1 === 'X') {
+              b3Opts = b1Opts;
+            } else if (f.b2 === '/') {
+              b3Opts = b1Opts;
+            } else {
+              // open on ball 2 after strike
+              b3Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
+              const b2Num = parseInt(f.b2) || 0;
+              for (let p = 1; p <= (9 - b2Num); p++) {
+                b3Opts.push({ val: String(p), label: `${p} pins` });
+              }
+            }
+          }
+        }
+
         const frameHtml = `
           <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-2.5">
             <div class="flex justify-between items-center text-xs">
@@ -345,20 +435,26 @@
               </div>
             </div>
 
-            <!-- Frame Balls -->
+            <!-- Frame Balls Dropdowns -->
             <div class="grid ${is10th ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
               <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 1 (X, 0-9)</label>
-                <input type="text" maxlength="2" value="${f.b1 || ''}" oninput="updateFrameData(${idx}, 'b1', this.value)" placeholder="X" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500">
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 1</label>
+                <select onchange="updateFrameData(${idx}, 'b1', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500">
+                  ${buildOptions(b1Opts, f.b1)}
+                </select>
               </div>
               <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 2 (/, 0-9)</label>
-                <input type="text" maxlength="2" value="${f.b2 || ''}" oninput="updateFrameData(${idx}, 'b2', this.value)" placeholder="/" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500">
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 2</label>
+                <select ${b2Disabled ? 'disabled' : ''} onchange="updateFrameData(${idx}, 'b2', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500 disabled:opacity-30">
+                  ${buildOptions(b2Opts, f.b2)}
+                </select>
               </div>
               ${is10th ? `
               <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 3 (X, /, 0-9)</label>
-                <input type="text" maxlength="2" value="${f.b3 || ''}" oninput="updateFrameData(${idx}, 'b3', this.value)" placeholder="X" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500">
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 3</label>
+                <select ${b3Disabled ? 'disabled' : ''} onchange="updateFrameData(${idx}, 'b3', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500 disabled:opacity-30">
+                  ${buildOptions(b3Opts, f.b3)}
+                </select>
               </div>
               ` : ''}
             </div>
@@ -373,7 +469,7 @@
       });
     }
 
-    // Traditional Bowling Scoring Algorithm
+    // Traditional Bowling Scoring Algorithm & Max Score Calculator
     function calculateScores() {
       let seriesTotal = 0;
 
@@ -436,13 +532,99 @@
         gamesData[g].totalScore = gameScore;
         seriesTotal += gameScore;
 
+        // Calculate Max Possible Score for Active Game
         if (g === activeGameIdx) {
           document.getElementById('active-game-score').innerText = gameScore;
+          document.getElementById('active-game-max-score').innerText = calculateMaxPossibleScore(frames);
         }
       }
 
       document.getElementById('block-series-total').innerText = `Series: ${seriesTotal}`;
       return seriesTotal;
+    }
+
+    // Engine to project maximum possible score (assuming strikes on all unthrown remaining shots)
+    function calculateMaxPossibleScore(frames) {
+      // Build hypothetical frame copy where unthrown shots become Strikes ('X')
+      const simFrames = frames.map((f, idx) => {
+        const is10 = idx === 9;
+        let simB1 = f.b1;
+        let simB2 = f.b2;
+        let simB3 = f.b3;
+
+        if (!simB1) {
+          simB1 = 'X';
+          if (!is10) {
+            simB2 = '';
+          }
+        }
+
+        if (is10) {
+          if (simB1 === 'X' && !simB2) simB2 = 'X';
+          if ((simB1 === 'X' || simB2 === '/') && !simB3) simB3 = 'X';
+          if (simB1 && simB1 !== 'X' && !simB2) {
+            simB2 = '/';
+            if (!simB3) simB3 = 'X';
+          }
+        } else {
+          if (simB1 && simB1 !== 'X' && !simB2) {
+            simB2 = '/';
+          }
+        }
+
+        return { b1: simB1, b2: simB2, b3: simB3 };
+      });
+
+      let maxScore = 0;
+      for (let i = 0; i < 10; i++) {
+        const f = simFrames[i];
+        const b1 = (f.b1 || '').trim().toUpperCase();
+        const b2 = (f.b2 || '').trim().toUpperCase();
+        const b3 = (f.b3 || '').trim().toUpperCase();
+
+        if (b1 === 'X' || b1 === '10') {
+          maxScore += 10;
+          if (i < 9) {
+            const nextF = simFrames[i + 1];
+            const nextB1 = (nextF.b1 || '').trim().toUpperCase();
+            if (nextB1 === 'X' || nextB1 === '10') {
+              maxScore += 10;
+              if (i < 8) {
+                const nextNextF = simFrames[i + 2];
+                const nnB1 = (nextNextF.b1 || '').trim().toUpperCase();
+                maxScore += (nnB1 === 'X' || nnB1 === '10') ? 10 : (parseInt(nnB1) || 0);
+              } else {
+                const nextB2 = (nextF.b2 || '').trim().toUpperCase();
+                maxScore += (nextB2 === 'X' || nextB2 === '10') ? 10 : (parseInt(nextB2) || 0);
+              }
+            } else {
+              maxScore += parseInt(nextB1) || 0;
+              const nextB2 = (nextF.b2 || '').trim().toUpperCase();
+              if (nextB2 === '/') maxScore += 10 - (parseInt(nextB1) || 0);
+              else maxScore += parseInt(nextB2) || 0;
+            }
+          } else {
+            if (b2 === 'X' || b2 === '10') maxScore += 10;
+            else maxScore += parseInt(b2) || 0;
+
+            if (b3 === 'X' || b3 === '10') maxScore += 10;
+            else if (b3 === '/') maxScore += 10 - (parseInt(b2) || 0);
+            else maxScore += parseInt(b3) || 0;
+          }
+        } else if (b2 === '/') {
+          maxScore += 10;
+          if (i < 9) {
+            const nextB1 = (simFrames[i + 1].b1 || '').trim().toUpperCase();
+            maxScore += (nextB1 === 'X' || nextB1 === '10') ? 10 : (parseInt(nextB1) || 0);
+          } else {
+            if (b3 === 'X' || b3 === '10') maxScore += 10;
+            else maxScore += parseInt(b3) || 0;
+          }
+        } else {
+          maxScore += (parseInt(b1) || 0) + (parseInt(b2) || 0);
+        }
+      }
+      return maxScore;
     }
 
     function toggleGuideModal(show) {
@@ -613,32 +795,28 @@
           let gameScore = game.totalScore || 0;
           if (gameScore > highGame) highGame = gameScore;
 
-          // Check if game has entries
           let hasEntries = game.frames.some(f => (f.b1 || '').trim() !== '');
           if (!hasEntries) continue;
 
           totalGames++;
           totalPinfall += gameScore;
 
-          game.frames.forEach((f, idx) => {
+          game.frames.forEach((f) => {
             const b1 = (f.b1 || '').trim().toUpperCase();
             const b2 = (f.b2 || '').trim().toUpperCase();
 
-            if (!b1 && !b2) return; // Skip unfilled frames
+            if (!b1 && !b2) return;
             totalFrames++;
 
-            // Strike checking
             if (b1 === 'X' || b1 === '10') {
               totalStrikes++;
               totalFirstBallPins += 10;
               totalFirstBallShots++;
             } else {
-              // Non-strike first ball
               const b1Pins = parseInt(b1) || 0;
               totalFirstBallPins += b1Pins;
               totalFirstBallShots++;
 
-              // Spare opportunity
               spareOpportunities++;
               if (b2 === '/') {
                 spareConversions++;
