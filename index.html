@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bowling Session Tracker & Reference Guide</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-4 py-3 shadow-md flex justify-between items-center">
+    <div>
+      <h1 class="text-lg font-bold text-amber-400">🎳 Frame-by-Frame Journal</h1>
+      <p class="text-xs text-slate-400">16.5 mph | 410 RPM | Viking & Zen Soul</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="switchTab('log')" id="tab-btn-log" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition">Log Session</button>
+      <button onclick="switchTab('guide')" id="tab-btn-guide" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-200 transition">Game Plan</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- VIEW 1: SESSION LOG FORM -->
+    <section id="view-log" class="space-y-6">
+      
+      <!-- Session Overview Card -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">1. Session Metadata</h2>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Date</label>
+            <input type="date" id="session-date" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Center</label>
+            <select id="session-center" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500">
+              <option value="Classic Bowl (Brunswick)">Classic Bowl (Brunswick)</option>
+              <option value="Planet Bowl (AMF)">Planet Bowl (AMF)</option>
+              <option value="Other Center">Other Center</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Tabs Selector -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400">2. Frame-by-Frame Log</h2>
+          <span id="block-total-score" class="text-xs font-bold text-amber-300">Series: 0</span>
+        </div>
+
+        <!-- Game Numbers 1-5 -->
+        <div class="flex gap-1 overflow-x-auto pb-1" id="game-tab-bar">
+          <button onclick="selectGameTab(1)" id="gtab-1" class="flex-1 py-1.5 px-2 bg-amber-500 text-slate-950 rounded-lg text-xs font-bold">G1</button>
+          <button onclick="selectGameTab(2)" id="gtab-2" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G2</button>
+          <button onclick="selectGameTab(3)" id="gtab-3" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G3</button>
+          <button onclick="selectGameTab(4)" id="gtab-4" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G4</button>
+          <button onclick="selectGameTab(5)" id="gtab-5" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G5</button>
+        </div>
+
+        <!-- Active Game Header Info -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-0.5">Primary Ball Used</label>
+            <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+              <option value="Viking Conquest">Viking Conquest</option>
+              <option value="Zen Soul">Zen Soul</option>
+              <option value="T-Zone Spare">T-Zone Spare</option>
+            </select>
+          </div>
+          <div class="flex flex-col justify-center items-end">
+            <span class="text-[10px] text-slate-400">Game Total</span>
+            <span id="active-game-score" class="text-base font-bold text-amber-400">0</span>
+          </div>
+        </div>
+
+        <!-- Frames 1 through 10 Container -->
+        <div id="frames-container" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Session Review & Reflection -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">3. Post-Session Reflection</h2>
+        
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">What Worked Well Today?</label>
+          <textarea id="notes-good" rows="2" placeholder="e.g. 28-to-10 line gave explosive entry on fresh oil..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Misses / Breakdown Issues Identified</label>
+          <textarea id="notes-bad" rows="2" placeholder="e.g. Stayed on Conquest too long in Game 3, burned up into 3-6 pins..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="saveSessionLog()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg">
+            💾 Save Session
+          </button>
+          <button onclick="exportToCSV()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg">
+            📊 Export to CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- History Log -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400">Saved History</h2>
+          <button onclick="clearHistory()" class="text-[10px] text-red-400 hover:underline">Clear All</button>
+        </div>
+        <div id="saved-logs" class="space-y-2 text-xs text-slate-400">
+          <p class="italic">No saved sessions yet.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 2: REFERENCE GUIDE & GAME PLAN -->
+    <section id="view-guide" class="hidden space-y-6">
+      
+      <!-- Center Quick Comparison -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">📍 House Characteristics</h2>
+        
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-700">
+            <span class="font-bold text-slate-200">Classic Bowl (Brunswick Anvilane)</span>
+            <p class="text-slate-400 mt-0.5">Slick, lower friction. Requires clean outer dry projection (6-8 breakpoint) for sharp back-end turn.</p>
+          </div>
+          <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-700">
+            <span class="font-bold text-slate-200">Planet Bowl (AMF Synthetics)</span>
+            <p class="text-slate-400 mt-0.5">Higher surface traction. Ball reads 1-2 feet earlier. Moves left slightly earlier in series.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arsenal & Line Rules -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">⚡ 5-Game Master Game Plan</h2>
+
+        <div class="space-y-3 text-xs">
+          <!-- Phase 1 -->
+          <div class="p-3 bg-slate-900 rounded-lg border-l-4 border-amber-500 space-y-1">
+            <div class="flex justify-between font-bold text-slate-200">
+              <span>Games 1–2: Fresh Oil</span>
+              <span class="text-amber-400">Viking Conquest</span>
+            </div>
+            <p class="text-slate-300"><strong class="text-slate-100">Baseline:</strong> 28 at feet $\rightarrow$ 10 at arrows $\rightarrow$ 6-8 downlane.</p>
+            <p class="text-slate-400">Drive speed (16.5 mph) fluidly. Make 1-and-1 leftward moves as heads start drying.</p>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="p-3 bg-slate-900 rounded-lg border-l-4 border-purple-500 space-y-1">
+            <div class="flex justify-between font-bold text-slate-200">
+              <span>Game 3: The Transition Trigger</span>
+              <span class="text-purple-400">Switch to Zen Soul</span>
+            </div>
+            <p class="text-slate-300"><strong class="text-slate-100">The Trigger:</strong> Conquest burns up in fronts & slides into 3–6 pins.</p>
+            <p class="text-slate-400"><strong class="text-slate-100">Action:</strong> Put Conquest away. Move feet to 30-15 with Zen Soul. Cleaner hybrid cover glides past burned heads!</p>
+          </div>
+
+          <!-- Phase 3 -->
+          <div class="p-3 bg-slate-900 rounded-lg border-l-4 border-blue-500 space-y-1">
+            <div class="flex justify-between font-bold text-slate-200">
+              <span>Games 4–5: Late Burn & Carrydown</span>
+              <span class="text-blue-400">Zen Soul (Deep Lines)</span>
+            </div>
+            <p class="text-slate-300"><strong class="text-slate-100">Alignment:</strong> Deep inside (30-15 or deeper).</p>
+            <p class="text-slate-400"><strong class="text-slate-100">2-to-1 Rule for Carrydown:</strong> Move feet 2 left, eyes 1 left to open up launch angle to outer friction.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Trouble-Shooting Reference -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-amber-400 border-b border-slate-700 pb-2">🚨 On-Lane Diagnostics</h2>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 bg-slate-900 rounded-lg">
+            <p class="font-bold text-red-400">❌ Ball misses high / crosses headpin early:</p>
+            <p class="text-slate-300">Front oil drying out. Shift feet 1-2 boards LEFT into fresher central oil.</p>
+          </div>
+          <div class="p-2.5 bg-slate-900 rounded-lg">
+            <p class="font-bold text-yellow-400">❌ Ball skids past headpin into 3–6 pins:</p>
+            <p class="text-slate-300">Conquest is burning up rotational energy early. <span class="text-amber-400 font-bold">SWITCH TO ZEN SOUL IMMEDIATELY.</span> Do NOT move right!</p>
+          </div>
+          <div class="p-2.5 bg-slate-900 rounded-lg">
+            <p class="font-bold text-blue-400">❌ Ball skids straight on carrydown late in set:</p>
+            <p class="text-slate-300">Open up angles using 2-to-1 rule to project ball out toward board 6–7 friction downlane.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    // Tab Switching
+    function switchTab(tab) {
+      const viewLog = document.getElementById('view-log');
+      const viewGuide = document.getElementById('view-guide');
+      const btnLog = document.getElementById('tab-btn-log');
+      const btnGuide = document.getElementById('tab-btn-guide');
+
+      if (tab === 'log') {
+        viewLog.classList.remove('hidden');
+        viewGuide.classList.add('hidden');
+        btnLog.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition";
+        btnGuide.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-200 transition";
+      } else {
+        viewLog.classList.add('hidden');
+        viewGuide.classList.remove('hidden');
+        btnGuide.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition";
+        btnLog.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-200 transition";
+      }
+    }
+
+    // State for 5 Games Frame-by-Frame
+    let activeGameIdx = 1;
+    let gamesData = {};
+
+    function initGamesData() {
+      for (let g = 1; g <= 5; g++) {
+        gamesData[g] = {
+          ball: g <= 2 ? 'Viking Conquest' : 'Zen Soul',
+          frames: Array.from({ length: 10 }, (_, i) => ({
+            b1: '',
+            b2: '',
+            b3: '', // For 10th frame bonus
+            line: i === 0 ? (g <= 2 ? '28-10' : '30-15') : ''
+          }))
+        };
+      }
+    }
+
+    function selectGameTab(gNum) {
+      activeGameIdx = gNum;
+      for (let i = 1; i <= 5; i++) {
+        const tab = document.getElementById(`gtab-${i}`);
+        if (i === gNum) {
+          tab.className = "flex-1 py-1.5 px-2 bg-amber-500 text-slate-950 rounded-lg text-xs font-bold";
+        } else {
+          tab.className = "flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold";
+        }
+      }
+      document.getElementById('active-game-ball').value = gamesData[activeGameIdx].ball;
+      renderActiveGameFrames();
+      calculateScores();
+    }
+
+    function updateActiveGameBall(val) {
+      gamesData[activeGameIdx].ball = val;
+    }
+
+    function updateFrameData(fIdx, field, val) {
+      gamesData[activeGameIdx].frames[fIdx][field] = val.toUpperCase();
+      calculateScores();
+    }
+
+    function renderActiveGameFrames() {
+      const container = document.getElementById('frames-container');
+      container.innerHTML = '';
+      const frames = gamesData[activeGameIdx].frames;
+
+      frames.forEach((f, idx) => {
+        const is10th = idx === 9;
+        const frameHtml = `
+          <div class="bg-slate-900 border border-slate-700 rounded-lg p-2.5 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-bold text-amber-400">Frame ${idx + 1}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[10px] text-slate-400">Line:</span>
+                <input type="text" value="${f.line}" onchange="updateFrameData(${idx}, 'line', this.value)" placeholder="e.g. 28-10" class="bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-amber-200 w-20 text-center focus:outline-none focus:border-amber-500">
+              </div>
+            </div>
+
+            <!-- Frame Balls Input -->
+            <div class="grid ${is10th ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
+              <div>
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 1 (X, 0-9)</label>
+                <input type="text" maxlength="2" value="${f.b1}" oninput="updateFrameData(${idx}, 'b1', this.value)" placeholder="X or pins" class="w-full bg-slate-800 border border-slate-700 rounded text-center py-1 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 2 (/, 0-9)</label>
+                <input type="text" maxlength="2" value="${f.b2}" oninput="updateFrameData(${idx}, 'b2', this.value)" placeholder="/ or pins" class="w-full bg-slate-800 border border-slate-700 rounded text-center py-1 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-amber-500">
+              </div>
+              ${is10th ? `
+              <div>
+                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 3 (X, /, 0-9)</label>
+                <input type="text" maxlength="2" value="${f.b3}" oninput="updateFrameData(${idx}, 'b3', this.value)" placeholder="Extra" class="w-full bg-slate-800 border border-slate-700 rounded text-center py-1 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-amber-500">
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', frameHtml);
+      });
+    }
+
+    // Scoring Engine for Traditional Bowling
+    function calculateScores() {
+      let blockTotal = 0;
+
+      for (let g = 1; g <= 5; g++) {
+        const frames = gamesData[g].frames;
+        let gameScore = 0;
+        
+        // Convert entries to numerical values
+        for (let i = 0; i < 10; i++) {
+          const f = frames[i];
+          const b1 = f.b1.trim();
+          const b2 = f.b2.trim();
+          const b3 = f.b3.trim();
+
+          if (b1 === 'X' || b1 === '10') {
+            gameScore += 10;
+            // Strike Bonus
+            if (i < 9) {
+              const nextF = frames[i + 1];
+              const nextB1 = nextF.b1.trim();
+              if (nextB1 === 'X' || nextB1 === '10') {
+                gameScore += 10;
+                if (i < 8) {
+                  const nextNextF = frames[i + 2];
+                  const nnB1 = nextNextF.b1.trim();
+                  gameScore += (nnB1 === 'X' || nnB1 === '10') ? 10 : (parseInt(nnB1) || 0);
+                } else {
+                  // 10th frame ball 2
+                  const nextB2 = nextF.b2.trim();
+                  gameScore += (nextB2 === 'X' || nextB2 === '10') ? 10 : (parseInt(nextB2) || 0);
+                }
+              } else {
+                gameScore += parseInt(nextB1) || 0;
+                const nextB2 = nextF.b2.trim();
+                if (nextB2 === '/') {
+                  gameScore += 10 - (parseInt(nextB1) || 0);
+                } else {
+                  gameScore += parseInt(nextB2) || 0;
+                }
+              }
+            } else {
+              // 10th frame strike bonus
+              if (b2 === 'X' || b2 === '10') gameScore += 10;
+              else gameScore += parseInt(b2) || 0;
+
+              if (b3 === 'X' || b3 === '10') gameScore += 10;
+              else if (b3 === '/') gameScore += 10 - (parseInt(b2) || 0);
+              else gameScore += parseInt(b3) || 0;
+            }
+          } else if (b2 === '/') {
+            gameScore += 10;
+            // Spare Bonus
+            if (i < 9) {
+              const nextB1 = frames[i + 1].b1.trim();
+              gameScore += (nextB1 === 'X' || nextB1 === '10') ? 10 : (parseInt(nextB1) || 0);
+            } else {
+              if (b3 === 'X' || b3 === '10') gameScore += 10;
+              else gameScore += parseInt(b3) || 0;
+            }
+          } else {
+            gameScore += (parseInt(b1) || 0) + (parseInt(b2) || 0);
+          }
+        }
+
+        gamesData[g].totalScore = gameScore;
+        blockTotal += gameScore;
+
+        if (g === activeGameIdx) {
+          document.getElementById('active-game-score').innerText = gameScore;
+        }
+      }
+
+      document.getElementById('block-total-score').innerText = `Series: ${blockTotal}`;
+    }
+
+    // Save Data to Local Storage
+    function saveSessionLog() {
+      const date = document.getElementById('session-date').value || new Date().toISOString().split('T')[0];
+      const center = document.getElementById('session-center').value;
+      const good = document.getElementById('notes-good').value;
+      const bad = document.getElementById('notes-bad').value;
+
+      const sessionData = { id: Date.now(), date, center, good, bad, games: gamesData };
+
+      let logs = JSON.parse(localStorage.getItem('bowling_logs') || '[]');
+      logs.unshift(sessionData);
+      localStorage.setItem('bowling_logs', JSON.stringify(logs));
+
+      alert('Frame-by-frame session saved!');
+      renderSavedLogs();
+    }
+
+    // Render Saved Logs
+    function renderSavedLogs() {
+      const historyContainer = document.getElementById('saved-logs');
+      const logs = JSON.parse(localStorage.getItem('bowling_logs') || '[]');
+
+      if (logs.length === 0) {
+        historyContainer.innerHTML = '<p class="italic">No saved sessions yet.</p>';
+        return;
+      }
+
+      historyContainer.innerHTML = logs.map(log => {
+        let total = 0;
+        if (log.games) {
+          Object.values(log.games).forEach(g => total += (g.totalScore || 0));
+        }
+        return `
+          <div class="p-2.5 bg-slate-900 border border-slate-700 rounded-lg space-y-1">
+            <div class="flex justify-between font-bold text-slate-200">
+              <span>${log.date} @ ${log.center}</span>
+              <span class="text-amber-400">Total: ${total}</span>
+            </div>
+            <p class="text-[10px] text-slate-400">Good: ${log.good || 'N/A'}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function clearHistory() {
+      if (confirm('Clear all saved session history?')) {
+        localStorage.removeItem('bowling_logs');
+        renderSavedLogs();
+      }
+    }
+
+    // Export Session Data to CSV
+    function exportToCSV() {
+      const date = document.getElementById('session-date').value || new Date().toISOString().split('T')[0];
+      const center = document.getElementById('session-center').value;
+      const good = (document.getElementById('notes-good').value || '').replace(/"/g, '""');
+      const bad = (document.getElementById('notes-bad').value || '').replace(/"/g, '""');
+
+      let csvRows = [];
+
+      // CSV Header
+      csvRows.push(['Date', 'Center', 'Game', 'Ball Used', 'Game Total', 'Frame', 'Line Played', 'Ball 1', 'Ball 2', 'Ball 3']);
+
+      let seriesTotal = 0;
+
+      for (let g = 1; g <= 5; g++) {
+        const game = gamesData[g];
+        const ball = game.ball || '';
+        const gameScore = game.totalScore || 0;
+        seriesTotal += gameScore;
+
+        game.frames.forEach((f, idx) => {
+          csvRows.push([
+            `"${date}"`,
+            `"${center}"`,
+            g,
+            `"${ball}"`,
+            gameScore,
+            idx + 1,
+            `"${f.line || ''}"`,
+            `"${f.b1 || ''}"`,
+            `"${f.b2 || ''}"`,
+            `"${f.b3 || ''}"`
+          ]);
+        });
+      }
+
+      // Append Reflection Notes & Series Summary at the bottom
+      csvRows.push([]);
+      csvRows.push(['Series Total', seriesTotal]);
+      csvRows.push(['What Worked Well', `"${good}"`]);
+      csvRows.push(['Misses / Breakdown Issues', `"${bad}"`]);
+
+      const csvContent = csvRows.map(e => e.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `bowling_session_${date}_${center.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Init App
+    document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+    initGamesData();
+    selectGameTab(1);
+    renderSavedLogs();
+  </script>
+</body>
+</html>
