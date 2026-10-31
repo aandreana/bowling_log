@@ -98,7 +98,7 @@
       width: 100%; 
       max-width: 400px;
       height: auto; 
-      background-color: #0b1120; 
+      background-color: #080d1a; 
       border-radius: 6px; 
       border: 1px solid var(--border-color); 
     }
@@ -182,10 +182,16 @@
     <!-- TRAJECTORY VISUALIZER VIEW -->
     <div id="view-traj" class="view-panel">
       <div class="card">
-        <div class="card-title">Lane Trajectory Simulator</div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Visualize ball path from laydown through arrows to breakpoint.</p>
+        <div class="card-title">USBC Scaled Trajectory Simulator</div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Regulation 60' Lane Bed, 39 Boards (1.063" width), Gutters & Pin Deck Geometry.</p>
 
         <div style="margin-bottom: 10px;">
+          <label>Trajectory Curve Mode</label>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button id="mode-physics" class="btn btn-sm" onclick="setMode('physics')">4-Phase Physics Vector</button>
+            <button id="mode-smooth" class="btn btn-secondary btn-sm" onclick="setMode('smooth')">Smooth Continuous Arch</button>
+          </div>
+
           <label>Tactical Presets</label>
           <div style="display: flex; gap: 6px;">
             <button class="btn btn-secondary btn-sm" onclick="setPreset(28, 10, 7)">Viking (28-10-7)</button>
@@ -214,7 +220,7 @@
         </div>
 
         <div class="canvas-container">
-          <canvas id="laneCanvas" width="400" height="750"></canvas>
+          <canvas id="laneCanvas" width="480" height="960"></canvas>
         </div>
       </div>
     </div>
@@ -275,6 +281,7 @@
 
   <script>
     let activeGame = 1;
+    let trajMode = 'physics';
     let sessionData = { id: Date.now(), date: new Date().toISOString().split('T')[0], center: '', notes: '', games: {} };
 
     for (let g = 1; g <= 5; g++) {
@@ -343,7 +350,7 @@
       opts += `<option value="/" ${b2 === '/' ? 'selected' : ''}>/</option>`;
       for (let i = 9; i >= 0; i--) {
         const str = i === 0 ? '-' : String(i);
-        opts += `<option value="${str}" ${b2 === str ? 'selected' : ''}>${str}</option>`;
+        opts += `<option value="${str}" ${val === str ? 'selected' : ''}>${str}</option>`;
       }
       return opts;
     }
@@ -380,7 +387,6 @@
       let seriesTotal = 0;
       for (let g = 1; g <= 5; g++) {
         let rolls = [];
-        
         for (let f = 1; f <= 10; f++) {
           const fr = sessionData.games[g].frames[f];
           if (f < 10) {
@@ -455,6 +461,13 @@
       document.getElementById('disp-series-total').innerText = seriesTotal;
     }
 
+    function setMode(m) {
+      trajMode = m;
+      document.getElementById('mode-physics').className = m === 'physics' ? 'btn btn-sm' : 'btn btn-secondary btn-sm';
+      document.getElementById('mode-smooth').className = m === 'smooth' ? 'btn btn-sm' : 'btn btn-secondary btn-sm';
+      drawLane();
+    }
+
     function setPreset(lay, arr, brk) {
       document.getElementById('tr-laydown').value = lay;
       document.getElementById('tr-arrow').value = arr;
@@ -471,45 +484,86 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      const bToX = b => w - (b / 40) * w;
+      // -------------------------------------------------------------
+      // USBC SPECIFICATION SCALING (60 FT LENGTH x 41.5 INCH BED + GUTTERS)
+      // -------------------------------------------------------------
+      const gutterWidthInches = 9.25;
+      const laneBedWidthInches = 41.5;
+      const totalWidthInches = laneBedWidthInches + (gutterWidthInches * 2); // 60 inches
+      
+      const pxPerInch = w / totalWidthInches;
+      const laneBedLeftX = gutterWidthInches * pxPerInch;
+      const laneBedRightX = laneBedLeftX + (laneBedWidthInches * pxPerInch);
+      const boardWidthPx = (laneBedWidthInches * pxPerInch) / 39; // 1.063 inches / board
 
-      ctx.strokeStyle = '#1e293b';
+      const foulY = h - 60;
+      const pinYHead = 80;
+      const laneLengthPx = foulY - pinYHead;
+      const pxPerFoot = laneLengthPx / 60; // 60 feet from foul line to headpin
+
+      const distToY = ft => foulY - (ft * pxPerFoot);
+      const bToX = b => laneBedRightX - ((b - 0.5) * boardWidthPx);
+
+      // 1. Draw Gutters (Dark Gray)
+      ctx.fillStyle = '#050914';
+      ctx.fillRect(0, 0, laneBedLeftX, h);
+      ctx.fillRect(laneBedRightX, 0, w - laneBedRightX, h);
+
+      // 2. Draw Lane Bed (Synthetic Wood Tone)
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(laneBedLeftX, pinYHead - 40, laneBedWidthInches * pxPerInch, foulY - (pinYHead - 40) + 40);
+
+      // 3. Draw 39 Board Grid Lines
+      ctx.strokeStyle = '#1f2937';
       ctx.lineWidth = 1;
       for (let i = 1; i <= 39; i++) {
+        const x = bToX(i);
         ctx.beginPath();
-        ctx.moveTo(bToX(i), 0);
-        ctx.lineTo(bToX(i), h);
+        ctx.moveTo(x, pinYHead - 40);
+        ctx.lineTo(x, foulY + 40);
         ctx.stroke();
       }
 
-      const foulY = h - 40;
+      // 4. Foul Line (0 ft)
       ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(0, foulY);
-      ctx.lineTo(w, foulY);
+      ctx.moveTo(laneBedLeftX, foulY);
+      ctx.lineTo(laneBedRightX, foulY);
       ctx.stroke();
 
+      // 5. USBC Foul Line Dots (Spaced every 5 boards)
       for (let b = 5; b <= 35; b += 5) {
         const x = bToX(b);
         const is20 = (b === 20);
         ctx.fillStyle = is20 ? '#38bdf8' : '#94a3b8';
         ctx.beginPath();
-        ctx.arc(x, foulY + 12, is20 ? 5 : 3, 0, Math.PI * 2);
+        ctx.arc(x, foulY + 12, is20 ? 4.5 : 2.5, 0, Math.PI * 2);
         ctx.fill();
 
         if (is20) {
-          ctx.font = '10px sans-serif';
+          ctx.font = 'bold 10px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('20', x, foulY + 28);
+          ctx.fillText('20', x, foulY + 26);
         }
       }
 
+      // 6. USBC Laydown Range Dots (7 ft)
+      const laydownY = distToY(7);
+      for (let b = 5; b <= 35; b += 5) {
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(bToX(b), laydownY, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 7. USBC Target Arrows at 15 ft (V-shaped pattern, board 20 furthest forward)
+      const arrowBaseY = distToY(15);
       const arrowYMap = {
-        20: foulY - 180,
-        15: foulY - 165, 25: foulY - 165,
-        10: foulY - 150, 30: foulY - 150,
-         5: foulY - 135, 35: foulY - 135
+        20: arrowBaseY - 18,
+        15: arrowBaseY - 6,  25: arrowBaseY - 6,
+        10: arrowBaseY + 6,  30: arrowBaseY + 6,
+         5: arrowBaseY + 18, 35: arrowBaseY + 18
       };
 
       Object.entries(arrowYMap).forEach(([bStr, y]) => {
@@ -524,53 +578,135 @@
         ctx.fill();
       });
 
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
-      ctx.fillRect(0, foulY - 480, w, 90);
-
-      ctx.fillStyle = '#f8fafc';
-      const pinBoards = [34, 26, 18, 10, 30, 22, 14, 26, 18, 20];
-      const pinY = [40, 40, 40, 40, 65, 65, 65, 90, 90, 115];
-      pinBoards.forEach((pb, idx) => {
-        ctx.beginPath();
-        ctx.arc(bToX(pb), pinY[idx], 4, 0, Math.PI * 2);
-        ctx.fill();
+      // 8. USBC Range Finders Set 1 (34' to 37' on boards 15 and 25)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      const rf1Top = distToY(37);
+      const rf1Height = distToY(34) - rf1Top;
+      [15, 25].forEach(b => {
+        ctx.fillRect(bToX(b) - boardWidthPx / 2, rf1Top, boardWidthPx, rf1Height);
       });
 
+      // 9. USBC Range Finders Set 2 (40' to 43' on boards 10 and 30)
+      const rf2Top = distToY(43);
+      const rf2Height = distToY(40) - rf2Top;
+      [10, 30].forEach(b => {
+        ctx.fillRect(bToX(b) - boardWidthPx / 2, rf2Top, boardWidthPx, rf2Height);
+      });
+
+      // 10. USBC Pin Deck & 10-Pin Triangle Setup
+      const pinRadius = (2.375 / 2) * pxPerInch;
+      const pinRowY = [distToY(60), distToY(61.73), distToY(63.46), distToY(65.19)];
+      const pinPositions = [
+        { p: 1,  b: 20,   y: pinRowY[0] },
+        { p: 2,  b: 25.65, y: pinRowY[1] }, { p: 3, b: 14.35, y: pinRowY[1] },
+        { p: 4,  b: 31.3, y: pinRowY[2] },  { p: 5, b: 20,    y: pinRowY[2] }, { p: 6, b: 8.7, y: pinRowY[2] },
+        { p: 7,  b: 36.95, y: pinRowY[3] }, { p: 8, b: 25.65, y: pinRowY[3] }, { p: 9, b: 14.35, y: pinRowY[3] }, { p: 10, b: 3.05, y: pinRowY[3] }
+      ];
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      pinPositions.forEach(pin => {
+        ctx.beginPath();
+        ctx.arc(bToX(pin.b), pin.y, Math.max(pinRadius, 3), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // -------------------------------------------------------------
+      // 11. TRAJECTORY RENDERING
+      // -------------------------------------------------------------
       const lay = parseFloat(document.getElementById('tr-laydown').value) || 28;
       const arr = parseFloat(document.getElementById('tr-arrow').value) || 10;
       const brk = parseFloat(document.getElementById('tr-break').value) || 7;
       const pkt = parseFloat(document.getElementById('tr-pocket').value) || 17.5;
 
-      const p0 = { x: bToX(lay), y: foulY };
-      const p1 = { x: bToX(arr), y: foulY - 170 };
-      const p2 = { x: bToX(brk), y: foulY - 440 };
-      const p3 = { x: bToX(pkt), y: 115 };
+      const P0 = { x: bToX(lay), y: foulY };          // 0 ft
+      const P1 = { x: bToX(arr), y: distToY(15) };    // 15 ft
+      const P2 = { x: bToX(brk), y: distToY(40) };    // 40 ft
+      const P3 = { x: bToX(pkt), y: distToY(60) };    // 60 ft
 
+      if (trajMode === 'physics') {
+        // 4-PHASE REALISTIC PHYSICS VECTOR
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 3;
+
+        // Phase 1 & 2: Straight Skid (Laydown -> Arrows -> Breakpoint)
+        ctx.beginPath();
+        ctx.moveTo(P0.x, P0.y);
+        ctx.lineTo(P1.x, P1.y);
+        ctx.lineTo(P2.x, P2.y);
+        ctx.stroke();
+
+        // Phase 3: Bezier Hook Arc (40ft to 45ft Backend)
+        const P_hook_end = {
+          x: P2.x + (P3.x - P2.x) * 0.45,
+          y: distToY(45)
+        };
+        const skidDx = P2.x - P1.x;
+        const skidDy = P2.y - P1.y;
+        const rollDx = P3.x - P_hook_end.x;
+        const rollDy = P3.y - P_hook_end.y;
+
+        const cp1 = { x: P2.x + skidDx * 0.15, y: P2.y + skidDy * 0.15 };
+        const cp2 = { x: P_hook_end.x - rollDx * 0.25, y: P_hook_end.y - rollDy * 0.25 };
+
+        ctx.beginPath();
+        ctx.moveTo(P2.x, P2.y);
+        ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, P_hook_end.x, P_hook_end.y);
+        ctx.stroke();
+
+        // Phase 4: Straight Roll (45ft to 60ft Pocket)
+        ctx.beginPath();
+        ctx.moveTo(P_hook_end.x, P_hook_end.y);
+        ctx.lineTo(P3.x, P3.y);
+        ctx.stroke();
+
+        // Breakpoint Tick Indicators
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(P2.x, P2.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(P_hook_end.x, P_hook_end.y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else {
+        // SMOOTH CONTINUOUS ARCH MODE
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(P0.x, P0.y);
+        
+        ctx.bezierCurveTo(
+          P0.x + (P1.x - P0.x) * 0.5, P0.y + (P1.y - P0.y) * 0.5,
+          P1.x - (P2.x - P1.x) * 0.2, P1.y + (P2.y - P1.y) * 0.2,
+          P2.x, P2.y
+        );
+        ctx.bezierCurveTo(
+          P2.x + (P3.x - P2.x) * 0.3, P2.y + (P3.y - P2.y) * 0.3,
+          P3.x, P2.y + (P3.y - P2.y) * 0.7,
+          P3.x, P3.y
+        );
+        ctx.stroke();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(P2.x, P2.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Ball Indicator at Pocket (USBC 8.5" Diameter Ball Scale)
+      const ballRadius = (8.5 / 2) * pxPerInch;
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
       ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(p0.x, p0.y);
-      ctx.bezierCurveTo(
-        p0.x, p0.y - 80,
-        p1.x, p1.y + 40,
-        p1.x, p1.y
-      );
-      ctx.bezierCurveTo(
-        p1.x, p1.y - 60,
-        p2.x - 15, p2.y + 60,
-        p2.x, p2.y
-      );
-      ctx.bezierCurveTo(
-        p2.x + 15, p2.y - 60,
-        p3.x, p3.y + 40,
-        p3.x, p3.y
-      );
-      ctx.stroke();
-
-      ctx.fillStyle = '#22c55e';
-      ctx.beginPath();
-      ctx.arc(p2.x, p2.y, 6, 0, Math.PI * 2);
+      ctx.arc(P3.x, P3.y, Math.max(ballRadius, 4), 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
     }
 
     function calcAnalytics() {
