@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bowling Session Log & Strategy Visualizer</title>
+  <title>Bowling Log & Strategy</title>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -16,10 +16,26 @@
       --success-color: #22c55e;
       --danger-color: #ef4444;
       --warning-color: #f59e0b;
+      --max-width: 650px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; padding-bottom: 80px; }
+    
+    body { 
+      background-color: var(--bg-color); 
+      color: var(--text-main); 
+      padding: 12px; 
+      padding-bottom: 80px; 
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Container wrapper to constrain width on large screens */
+    .app-container {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
 
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
     h1 { font-size: 1.15rem; font-weight: 700; color: var(--accent-color); }
@@ -66,13 +82,27 @@
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
     .stat-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: center; }
     .stat-card .num { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 4px 0; }
-    .stat-card .desc { font-size: 0.7rem; color: var(--text-muted); uppercase; }
+    .stat-card .desc { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
 
     .history-item { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     .history-info h4 { font-size: 0.85rem; color: var(--text-main); }
     .history-info p { font-size: 0.75rem; color: var(--text-muted); }
 
-    canvas { width: 100%; height: auto; background-color: #0b1120; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 8px; }
+    .canvas-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    canvas { 
+      width: 100%; 
+      max-width: 400px;
+      height: auto; 
+      background-color: #0b1120; 
+      border-radius: 6px; 
+      border: 1px solid var(--border-color); 
+    }
 
     #guide-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 16px; overflow-y: auto; }
     .modal-content { background: var(--card-bg); border-radius: 8px; padding: 16px; max-width: 600px; margin: 0 auto; border: 1px solid var(--border-color); }
@@ -83,159 +113,163 @@
 </head>
 <body>
 
-  <header>
-    <h1>Bowling Log & Strategy</h1>
-    <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Game Plan</button>
-  </header>
+  <div class="app-container">
+    <header>
+      <h1>Bowling Log & Strategy</h1>
+      <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Game Plan</button>
+    </header>
 
-  <div class="top-nav">
-    <div class="nav-btn active" onclick="switchView('log')">Log Game</div>
-    <div class="nav-btn" onclick="switchView('traj')">Trajectory</div>
-    <div class="nav-btn" onclick="switchView('stats')">Analytics</div>
-    <div class="nav-btn" onclick="switchView('hist')">History</div>
-  </div>
+    <div class="top-nav">
+      <div class="nav-btn active" onclick="switchView('log')">Log Game</div>
+      <div class="nav-btn" onclick="switchView('traj')">Trajectory</div>
+      <div class="nav-btn" onclick="switchView('stats')">Analytics</div>
+      <div class="nav-btn" onclick="switchView('hist')">History</div>
+    </div>
 
-  <!-- LOG VIEW -->
-  <div id="view-log" class="view-panel active">
-    <div class="card">
-      <div class="grid-2">
+    <!-- LOG VIEW -->
+    <div id="view-log" class="view-panel active">
+      <div class="card">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="session-date" onchange="autoSave()" />
+          </div>
+          <div class="form-group">
+            <label>Center / Oil Pattern</label>
+            <input type="text" id="session-center" placeholder="e.g. Classic Bowl / House" onchange="autoSave()" />
+          </div>
+        </div>
+      </div>
+
+      <div class="game-tabs">
+        <div class="g-tab active" onclick="switchGame(1)">Game 1</div>
+        <div class="g-tab" onclick="switchGame(2)">Game 2</div>
+        <div class="g-tab" onclick="switchGame(3)">Game 3</div>
+        <div class="g-tab" onclick="switchGame(4)">Game 4</div>
+        <div class="g-tab" onclick="switchGame(5)">Game 5</div>
+      </div>
+
+      <div class="score-summary-bar">
+        <div class="score-box">
+          <div class="lbl">Current Score</div>
+          <div class="val" id="disp-curr-score">0</div>
+        </div>
+        <div class="score-box">
+          <div class="lbl">Max Possible</div>
+          <div class="val val-max" id="disp-max-score">300</div>
+        </div>
+        <div class="score-box">
+          <div class="lbl">Series Total</div>
+          <div class="val" id="disp-series-total">0</div>
+        </div>
+      </div>
+
+      <div id="game-views"></div>
+
+      <div class="card" style="margin-top: 12px;">
+        <div class="card-title">Session Reflection</div>
         <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="session-date" onchange="autoSave()" />
-        </div>
-        <div class="form-group">
-          <label>Center / Oil Pattern</label>
-          <input type="text" id="session-center" placeholder="e.g. Classic Bowl / House" onchange="autoSave()" />
-        </div>
-      </div>
-    </div>
-
-    <div class="game-tabs">
-      <div class="g-tab active" onclick="switchGame(1)">Game 1</div>
-      <div class="g-tab" onclick="switchGame(2)">Game 2</div>
-      <div class="g-tab" onclick="switchGame(3)">Game 3</div>
-      <div class="g-tab" onclick="switchGame(4)">Game 4</div>
-      <div class="g-tab" onclick="switchGame(5)">Game 5</div>
-    </div>
-
-    <div class="score-summary-bar">
-      <div class="score-box">
-        <div class="lbl">Current Score</div>
-        <div class="val" id="disp-curr-score">0</div>
-      </div>
-      <div class="score-box">
-        <div class="lbl">Max Possible</div>
-        <div class="val val-max" id="disp-max-score">300</div>
-      </div>
-      <div class="score-box">
-        <div class="lbl">Series Total</div>
-        <div class="val" id="disp-series-total">0</div>
-      </div>
-    </div>
-
-    <div id="game-views"></div>
-
-    <div class="card" style="margin-top: 12px;">
-      <div class="card-title">Session Reflection</div>
-      <div class="form-group">
-        <textarea id="session-notes" rows="2" placeholder="Overall takeaways, transitions, execution..." onchange="autoSave()"></textarea>
-      </div>
-    </div>
-
-    <div style="display: flex; gap: 8px; margin-top: 12px;">
-      <button class="btn btn-success" style="flex:1" onclick="saveSession()">Save Session</button>
-      <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
-      <button class="btn btn-danger" onclick="clearCurrentSession()">Clear</button>
-    </div>
-  </div>
-
-  <!-- TRAJECTORY VISUALIZER VIEW -->
-  <div id="view-traj" class="view-panel">
-    <div class="card">
-      <div class="card-title">Lane Trajectory Simulator (Scale 60' x 41.5")</div>
-      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Visualize ball path from laydown at foul line through arrows to breakpoint.</p>
-
-      <div style="margin-bottom: 10px;">
-        <label>Tactical Presets</label>
-        <div style="display: flex; gap: 6px;">
-          <button class="btn btn-secondary btn-sm" onclick="setPreset(28, 10, 7)">Viking (28-10-7)</button>
-          <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 15, 8)">Zen (30-15-8)</button>
-          <button class="btn btn-secondary btn-sm" onclick="setPreset(32, 17, 9)">Deep (32-17-9)</button>
+          <textarea id="session-notes" rows="2" placeholder="Overall takeaways, transitions, execution..." onchange="autoSave()"></textarea>
         </div>
       </div>
 
-      <div class="grid-4">
-        <div class="form-group">
-          <label>Laydown</label>
-          <input type="number" id="tr-laydown" value="28" min="1" max="39" oninput="drawLane()" />
-        </div>
-        <div class="form-group">
-          <label>Arrow (15')</label>
-          <input type="number" id="tr-arrow" value="10" min="1" max="39" oninput="drawLane()" />
-        </div>
-        <div class="form-group">
-          <label>Break (40')</label>
-          <input type="number" id="tr-break" value="7" min="1" max="39" oninput="drawLane()" />
-        </div>
-        <div class="form-group">
-          <label>Pocket (60')</label>
-          <input type="number" id="tr-pocket" value="17.5" step="0.5" min="1" max="39" oninput="drawLane()" />
-        </div>
-      </div>
-
-      <canvas id="laneCanvas" width="360" height="700"></canvas>
-    </div>
-  </div>
-
-  <!-- ANALYTICS VIEW -->
-  <div id="view-stats" class="view-panel">
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="desc">Scoring Average</div>
-        <div class="num" id="st-avg">0.0</div>
-      </div>
-      <div class="stat-card">
-        <div class="desc">First Ball Average</div>
-        <div class="num" id="st-fba">0.0</div>
-      </div>
-      <div class="stat-card">
-        <div class="desc">Spare Conversion %</div>
-        <div class="num" id="st-spare">0%</div>
-      </div>
-      <div class="stat-card">
-        <div class="desc">Open Frames</div>
-        <div class="num" id="st-opens">0 (0%)</div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="btn btn-success" style="flex:1" onclick="saveSession()">Save Session</button>
+        <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-danger" onclick="clearCurrentSession()">Clear</button>
       </div>
     </div>
-  </div>
 
-  <!-- HISTORY VIEW -->
-  <div id="view-hist" class="view-panel">
-    <div class="card">
-      <div class="card-title">Saved Sessions</div>
-      <div id="history-list"></div>
+    <!-- TRAJECTORY VISUALIZER VIEW -->
+    <div id="view-traj" class="view-panel">
+      <div class="card">
+        <div class="card-title">Lane Trajectory Simulator</div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Visualize ball path from laydown through arrows to breakpoint.</p>
+
+        <div style="margin-bottom: 10px;">
+          <label>Tactical Presets</label>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(28, 10, 7)">Viking (28-10-7)</button>
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 15, 8)">Zen (30-15-8)</button>
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(32, 17, 9)">Deep (32-17-9)</button>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="form-group">
+            <label>Laydown</label>
+            <input type="number" id="tr-laydown" value="28" min="1" max="39" oninput="drawLane()" />
+          </div>
+          <div class="form-group">
+            <label>Arrow (15')</label>
+            <input type="number" id="tr-arrow" value="10" min="1" max="39" oninput="drawLane()" />
+          </div>
+          <div class="form-group">
+            <label>Break (40')</label>
+            <input type="number" id="tr-break" value="7" min="1" max="39" oninput="drawLane()" />
+          </div>
+          <div class="form-group">
+            <label>Pocket (60')</label>
+            <input type="number" id="tr-pocket" value="17.5" step="0.5" min="1" max="39" oninput="drawLane()" />
+          </div>
+        </div>
+
+        <div class="canvas-container">
+          <canvas id="laneCanvas" width="400" height="750"></canvas>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- GAME PLAN MODAL -->
-  <div id="guide-modal">
-    <div class="modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h2 style="font-size: 1rem; color: var(--accent-color);">5-Game Execution Plan</h2>
-        <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Close</button>
+    <!-- ANALYTICS VIEW -->
+    <div id="view-stats" class="view-panel">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="desc">Scoring Average</div>
+          <div class="num" id="st-avg">0.0</div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">First Ball Average</div>
+          <div class="num" id="st-fba">0.0</div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Spare Conversion %</div>
+          <div class="num" id="st-spare">0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Open Frames</div>
+          <div class="num" id="st-opens">0 (0%)</div>
+        </div>
       </div>
-      <div class="guide-section">
-        <h3>Baseline Setup</h3>
-        <p><strong>Profile:</strong> 16.5 mph | 410 RPM | 10° Tilt | 45° Rotation</p>
-        <p><strong>Fresh Baseline:</strong> Viking Conquest (28-10-7)</p>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="view-hist" class="view-panel">
+      <div class="card">
+        <div class="card-title">Saved Sessions</div>
+        <div id="history-list"></div>
       </div>
-      <div class="guide-section">
-        <h3>Transition Trigger</h3>
-        <p>Switch to <strong>Zen Soul (30-15-8)</strong> when Viking exhibits 3-6 pin deflection (early roll-out).</p>
-      </div>
-      <div class="guide-section">
-        <h3>Deep Adjustments</h3>
-        <p>Apply <strong>2-to-1 rule</strong> (move feet 2, eyes 1) to open angles as oil breaks down.</p>
+    </div>
+
+    <!-- GAME PLAN MODAL -->
+    <div id="guide-modal">
+      <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h2 style="font-size: 1rem; color: var(--accent-color);">5-Game Execution Plan</h2>
+          <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Close</button>
+        </div>
+        <div class="guide-section">
+          <h3>Baseline Setup</h3>
+          <p><strong>Profile:</strong> 16.5 mph | 410 RPM | 10° Tilt | 45° Rotation</p>
+          <p><strong>Fresh Baseline:</strong> Viking Conquest (28-10-7)</p>
+        </div>
+        <div class="guide-section">
+          <h3>Transition Trigger</h3>
+          <p>Switch to <strong>Zen Soul (30-15-8)</strong> when Viking exhibits 3-6 pin deflection (early roll-out).</p>
+        </div>
+        <div class="guide-section">
+          <h3>Deep Adjustments</h3>
+          <p>Apply <strong>2-to-1 rule</strong> (move feet 2, eyes 1) to open angles as oil breaks down.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -316,7 +350,7 @@
 
     function updateShot(g, f, key, val) {
       sessionData.games[g].frames[f][key] = val;
-      if (key === 'b1') renderGames(); // Re-render to update B2 available options dynamically
+      if (key === 'b1') renderGames();
       autoSave();
       recalcScores();
     }
@@ -347,7 +381,6 @@
       for (let g = 1; g <= 5; g++) {
         let currentScore = 0;
         let maxPossible = 300;
-        // Simple scoring estimation engine
         for (let f = 1; f <= 10; f++) {
           const fr = sessionData.games[g].frames[f];
           if (fr.b1 === 'X') currentScore += 10;
@@ -383,10 +416,10 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Board coordinates (1-39 right to left)
+      // Board coordinates (1 to 39 right to left)
       const bToX = b => w - (b / 40) * w;
 
-      // Draw boards
+      // Draw background boards
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 1;
       for (let i = 1; i <= 39; i++) {
@@ -396,49 +429,102 @@
         ctx.stroke();
       }
 
-      // Foul Line (bottom)
+      // Foul Line (bottom area, y = h - 40)
+      const foulY = h - 40;
       ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(0, h - 20);
-      ctx.lineTo(w, h - 20);
+      ctx.moveTo(0, foulY);
+      ctx.lineTo(w, foulY);
       ctx.stroke();
 
-      // Arrows (15ft -> h - 170)
-      ctx.fillStyle = '#38bdf8';
-      [5, 10, 15, 20, 25, 30, 35].forEach(b => {
+      // Board Markers at Foul Line (5-board increments, 20 board emphasized)
+      for (let b = 5; b <= 35; b += 5) {
+        const x = bToX(b);
+        const is20 = (b === 20);
+        ctx.fillStyle = is20 ? '#38bdf8' : '#94a3b8';
         ctx.beginPath();
-        ctx.arc(bToX(b), h - 170, 3, 0, Math.PI * 2);
+        ctx.arc(x, foulY + 12, is20 ? 5 : 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Optional board number label under 20 board
+        if (is20) {
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('20', x, foulY + 28);
+        }
+      }
+
+      // V-Shaped Arrows Layout (Around 15ft zone)
+      // 20 board arrow is furthest forward (highest on screen / lowest y value)
+      const arrowYMap = {
+        20: foulY - 180, // Furthest forward
+        15: foulY - 165, 25: foulY - 165,
+        10: foulY - 150, 30: foulY - 150,
+         5: foulY - 135, 35: foulY - 135
+      };
+
+      Object.entries(arrowYMap).forEach(([bStr, y]) => {
+        const b = parseFloat(bStr);
+        const x = bToX(b);
+        ctx.fillStyle = '#38bdf8';
+        
+        // Draw triangular arrow pointing up-lane
+        ctx.beginPath();
+        ctx.moveTo(x, y - 8);
+        ctx.lineTo(x - 4, y + 6);
+        ctx.lineTo(x + 4, y + 6);
+        ctx.closePath();
         ctx.fill();
       });
 
-      // Breakpoint Zone (35-42ft)
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.05)';
-      ctx.fillRect(0, h - 480, w, 80);
+      // Breakpoint Zone Shading (35-42ft)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
+      ctx.fillRect(0, foulY - 480, w, 90);
 
-      // Pin Deck (top)
+      // Pin Deck Layout
       ctx.fillStyle = '#f8fafc';
-      [7, 8, 9, 10, 4, 5, 6, 2, 3, 1].forEach((p, idx) => {
-        const pinBoards = [34, 26, 18, 10, 30, 22, 14, 26, 18, 20];
-        const pinY = [40, 40, 40, 40, 60, 60, 60, 80, 80, 100];
+      const pinBoards = [34, 26, 18, 10, 30, 22, 14, 26, 18, 20];
+      const pinY = [40, 40, 40, 40, 65, 65, 65, 90, 90, 115];
+      pinBoards.forEach((pb, idx) => {
         ctx.beginPath();
-        ctx.arc(bToX(pinBoards[idx]), pinY[idx], 4, 0, Math.PI * 2);
+        ctx.arc(bToX(pb), pinY[idx], 4, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      // Trajectory curve
+      // Smooth Bezier Trajectory Curve
       const lay = parseFloat(document.getElementById('tr-laydown').value) || 28;
       const arr = parseFloat(document.getElementById('tr-arrow').value) || 10;
       const brk = parseFloat(document.getElementById('tr-break').value) || 7;
       const pkt = parseFloat(document.getElementById('tr-pocket').value) || 17.5;
 
+      const p0 = { x: bToX(lay), y: foulY };
+      const p1 = { x: bToX(arr), y: foulY - 160 };
+      const p2 = { x: bToX(brk), y: foulY - 440 };
+      const p3 = { x: bToX(pkt), y: 115 };
+
       ctx.strokeStyle = '#22c55e';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(bToX(lay), h - 20);
-      ctx.quadraticCurveTo(bToX(arr), h - 170, bToX(brk), h - 440);
-      ctx.quadraticCurveTo(bToX(brk), h - 460, bToX(pkt), 100);
+      ctx.moveTo(p0.x, p0.y);
+      // Cubic Bezier curve using calculated control points for fluid transition
+      ctx.bezierCurveTo(
+        p0.x + (p1.x - p0.x) * 0.6, p0.y + (p1.y - p0.y) * 0.6,
+        p1.x + (p2.x - p1.x) * 0.4, p1.y + (p2.y - p1.y) * 0.4,
+        p2.x, p2.y
+      );
+      ctx.bezierCurveTo(
+        p2.x + (p3.x - p2.x) * 0.5, p2.y + (p3.y - p2.y) * 0.3,
+        p3.x, p2.y + (p3.y - p2.y) * 0.7,
+        p3.x, p3.y
+      );
       ctx.stroke();
+
+      // Ball indicator at breakpoint
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(p2.x, p2.y, 6, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function calcAnalytics() {
