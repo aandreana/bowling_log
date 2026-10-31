@@ -3,967 +3,556 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bowling Session Log & Reference Guide</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Bowling Session Log & Strategy Visualizer</title>
   <style>
-    body {
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --success-color: #22c55e;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; padding-bottom: 80px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+    h1 { font-size: 1.15rem; font-weight: 700; color: var(--accent-color); }
+
+    .btn { background-color: var(--accent-color); color: #0f172a; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+    .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
+    .btn-danger { background-color: var(--danger-color); color: #fff; }
+    .btn-success { background-color: var(--success-color); color: #fff; }
+    .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+
+    .top-nav { display: flex; gap: 4px; margin-bottom: 14px; background-color: var(--card-bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .nav-btn { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 6px; }
+    .nav-btn.active { background-color: var(--accent-color); color: #0f172a; }
+
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+
+    .card { background-color: var(--card-bg); border-radius: 8px; padding: 12px; margin-bottom: 14px; border: 1px solid var(--border-color); }
+    .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+    .form-group { margin-bottom: 8px; }
+    label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; }
+    input, select, textarea { width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px; border-radius: 4px; font-size: 0.85rem; }
+
+    .game-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; overflow-x: auto; }
+    .g-tab { flex: 1; min-width: 60px; text-align: center; padding: 6px 0; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
+    .g-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+
+    .score-summary-bar { display: flex; justify-content: space-between; background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-color); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; }
+    .score-box { text-align: center; }
+    .score-box .lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+    .score-box .val { font-size: 1.1rem; font-weight: 700; color: var(--accent-color); }
+    .score-box .val-max { color: var(--warning-color); }
+
+    .frames-container { display: flex; flex-direction: column; gap: 8px; }
+    .frame-card { background-color: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; }
+    .frame-header { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: var(--accent-color); margin-bottom: 4px; }
+    .frame-inputs { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 6px; margin-bottom: 4px; }
+    .frame-inputs.f10 { grid-template-columns: 1fr 1fr 1fr 1.1fr; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: center; }
+    .stat-card .num { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 4px 0; }
+    .stat-card .desc { font-size: 0.7rem; color: var(--text-muted); uppercase; }
+
+    .history-item { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .history-info h4 { font-size: 0.85rem; color: var(--text-main); }
+    .history-info p { font-size: 0.75rem; color: var(--text-muted); }
+
+    canvas { width: 100%; height: auto; background-color: #0b1120; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 8px; }
+
+    #guide-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 16px; overflow-y: auto; }
+    .modal-content { background: var(--card-bg); border-radius: 8px; padding: 16px; max-width: 600px; margin: 0 auto; border: 1px solid var(--border-color); }
+    .guide-section { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .guide-section h3 { font-size: 0.85rem; color: var(--accent-color); margin-bottom: 4px; }
+    .guide-section p, .guide-section li { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-16">
+<body>
 
-  <!-- Header Bar -->
-  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 px-4 py-3 shadow-md flex justify-between items-center">
-    <div>
-      <h1 class="text-base font-bold text-sky-400">🎳 Bowling Session Journal</h1>
-      <p class="text-[11px] text-slate-400">16.5 mph | 410 RPM | Viking Conquest & Zen Soul</p>
-    </div>
-    <div class="flex gap-2">
-      <button onclick="toggleGuideModal(true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-sky-300 border border-slate-600 transition flex items-center gap-1">
-        📖 Game Plan
-      </button>
-    </div>
+  <header>
+    <h1>Bowling Log & Strategy</h1>
+    <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Game Plan</button>
   </header>
 
-  <!-- Navigation Tabs -->
-  <nav class="bg-slate-800/80 backdrop-blur border-b border-slate-700/80 sticky top-[53px] z-30 px-2 py-1.5">
-    <div class="max-w-md mx-auto flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-700/60">
-      <button onclick="switchMainTab('active')" id="mtab-active" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">Active Log</button>
-      <button onclick="switchMainTab('history')" id="mtab-history" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition">History</button>
-      <button onclick="switchMainTab('analytics')" id="mtab-analytics" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition">Analytics</button>
+  <div class="top-nav">
+    <div class="nav-btn active" onclick="switchView('log')">Log Game</div>
+    <div class="nav-btn" onclick="switchView('traj')">Trajectory</div>
+    <div class="nav-btn" onclick="switchView('stats')">Analytics</div>
+    <div class="nav-btn" onclick="switchView('hist')">History</div>
+  </div>
+
+  <!-- LOG VIEW -->
+  <div id="view-log" class="view-panel active">
+    <div class="card">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="session-date" onchange="autoSave()" />
+        </div>
+        <div class="form-group">
+          <label>Center / Oil Pattern</label>
+          <input type="text" id="session-center" placeholder="e.g. Classic Bowl / House" onchange="autoSave()" />
+        </div>
+      </div>
     </div>
-  </nav>
 
-  <!-- Main Content Container -->
-  <main class="max-w-md mx-auto p-4 space-y-5">
+    <div class="game-tabs">
+      <div class="g-tab active" onclick="switchGame(1)">Game 1</div>
+      <div class="g-tab" onclick="switchGame(2)">Game 2</div>
+      <div class="g-tab" onclick="switchGame(3)">Game 3</div>
+      <div class="g-tab" onclick="switchGame(4)">Game 4</div>
+      <div class="g-tab" onclick="switchGame(5)">Game 5</div>
+    </div>
 
-    <!-- VIEW 1: ACTIVE SESSION EDITOR -->
-    <section id="view-active" class="space-y-5">
-      <!-- Action Buttons -->
-      <div class="grid grid-cols-3 gap-2">
-        <button onclick="saveSessionToHistory()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
-          💾 Save Session
-        </button>
-        <button onclick="exportToCSV()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
-          📊 Export CSV
-        </button>
-        <button onclick="clearSession()" class="bg-slate-800 hover:bg-red-900/50 text-red-400 border border-slate-700 hover:border-red-600 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center">
-          🗑️ Clear Log
-        </button>
+    <div class="score-summary-bar">
+      <div class="score-box">
+        <div class="lbl">Current Score</div>
+        <div class="val" id="disp-curr-score">0</div>
       </div>
-
-      <!-- 1. Session Metadata -->
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">1. Session Info</h2>
-          <span id="session-editing-id" class="text-[10px] text-amber-400 font-semibold hidden">Editing Saved Log</span>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Date</label>
-            <input type="date" id="session-date" onchange="autoSave()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Center / Oil Pattern</label>
-            <input type="text" id="session-center" onchange="autoSave()" placeholder="e.g. Classic Bowl / THS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
-          </div>
-        </div>
+      <div class="score-box">
+        <div class="lbl">Max Possible</div>
+        <div class="val val-max" id="disp-max-score">300</div>
       </div>
+      <div class="score-box">
+        <div class="lbl">Series Total</div>
+        <div class="val" id="disp-series-total">0</div>
+      </div>
+    </div>
 
-      <!-- 2. Game Tabs & Frame-by-Frame Tracking -->
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. Frame-by-Frame Log</h2>
-          <span id="block-series-total" class="text-xs font-bold text-emerald-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700">Series: 0</span>
-        </div>
+    <div id="game-views"></div>
 
-        <!-- Game Tab Selector -->
-        <div class="flex gap-1 overflow-x-auto pb-1" id="game-tab-bar">
-          <button onclick="selectGameTab(1)" id="gtab-1" class="flex-1 py-1.5 px-2 bg-sky-500 text-slate-950 rounded-lg text-xs font-bold">G1</button>
-          <button onclick="selectGameTab(2)" id="gtab-2" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G2</button>
-          <button onclick="selectGameTab(3)" id="gtab-3" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G3</button>
-          <button onclick="selectGameTab(4)" id="gtab-4" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G4</button>
-          <button onclick="selectGameTab(5)" id="gtab-5" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G5</button>
-        </div>
+    <div class="card" style="margin-top: 12px;">
+      <div class="card-title">Session Reflection</div>
+      <div class="form-group">
+        <textarea id="session-notes" rows="2" placeholder="Overall takeaways, transitions, execution..." onchange="autoSave()"></textarea>
+      </div>
+    </div>
 
-        <!-- Game Level Controls & Scores -->
-        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs items-center">
-          <div>
-            <label class="block text-[9px] text-slate-400 mb-0.5">Primary Ball</label>
-            <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-xs text-slate-200">
-              <option value="Viking Conquest">Viking Conquest</option>
-              <option value="Zen Soul">Zen Soul</option>
-              <option value="T-Zone / Spare Ball">T-Zone / Spare Ball</option>
-            </select>
-          </div>
-          <div class="flex flex-col items-center border-l border-r border-slate-800 px-1">
-            <span class="text-[9px] text-slate-400 uppercase tracking-wider">Score</span>
-            <span id="active-game-score" class="text-base font-extrabold text-sky-400">0</span>
-          </div>
-          <div class="flex flex-col items-center">
-            <span class="text-[9px] text-amber-400 font-bold uppercase tracking-wider">Max Possible</span>
-            <span id="active-game-max-score" class="text-base font-black text-amber-400">300</span>
-          </div>
-        </div>
+    <div style="display: flex; gap: 8px; margin-top: 12px;">
+      <button class="btn btn-success" style="flex:1" onclick="saveSession()">Save Session</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+      <button class="btn btn-danger" onclick="clearCurrentSession()">Clear</button>
+    </div>
+  </div>
 
-        <!-- Container for Frames 1 through 10 -->
-        <div id="frames-container" class="space-y-3">
-          <!-- Rendered dynamically via JS -->
+  <!-- TRAJECTORY VISUALIZER VIEW -->
+  <div id="view-traj" class="view-panel">
+    <div class="card">
+      <div class="card-title">Lane Trajectory Simulator (Scale 60' x 41.5")</div>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Visualize ball path from laydown at foul line through arrows to breakpoint.</p>
+
+      <div style="margin-bottom: 10px;">
+        <label>Tactical Presets</label>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="setPreset(28, 10, 7)">Viking (28-10-7)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 15, 8)">Zen (30-15-8)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setPreset(32, 17, 9)">Deep (32-17-9)</button>
         </div>
       </div>
 
-      <!-- 3. Overall Session Reflection -->
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">3. Session Takeaways</h2>
-        <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Execution & Lane Conditions Feedback</label>
-          <textarea id="session-notes" onchange="autoSave()" rows="3" placeholder="Notes on transition timing, pin carry, physical execution..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
+      <div class="grid-4">
+        <div class="form-group">
+          <label>Laydown</label>
+          <input type="number" id="tr-laydown" value="28" min="1" max="39" oninput="drawLane()" />
         </div>
-      </div>
-    </section>
-
-    <!-- VIEW 2: SAVED SESSIONS HISTORY -->
-    <section id="view-history" class="hidden space-y-4">
-      <div class="flex justify-between items-center bg-slate-800 border border-slate-700 rounded-xl p-4">
-        <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">Saved Sessions Log</h2>
-          <p class="text-[11px] text-slate-400">Review past sessions or tap to edit</p>
+        <div class="form-group">
+          <label>Arrow (15')</label>
+          <input type="number" id="tr-arrow" value="10" min="1" max="39" oninput="drawLane()" />
         </div>
-        <button onclick="exportAllToCSV()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
-          Export All CSV
-        </button>
-      </div>
-
-      <div id="history-list-container" class="space-y-3">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- VIEW 3: OVERALL ANALYTICS DASHBOARD -->
-    <section id="view-analytics" class="hidden space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">Performance Analytics</h2>
-        <p class="text-[11px] text-slate-400">Aggregated stats across all saved sessions in history.</p>
-
-        <!-- KPI Metric Cards -->
-        <div class="grid grid-cols-2 gap-3 pt-1">
-          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Scoring Average</span>
-            <div id="stat-scoring-avg" class="text-xl font-black text-sky-400">0.0</div>
-            <span class="text-[9px] text-slate-500 block" id="stat-games-count">0 games played</span>
-          </div>
-
-          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">First Ball Average</span>
-            <div id="stat-first-ball-avg" class="text-xl font-black text-amber-400">0.00</div>
-            <span class="text-[9px] text-slate-500 block">Avg pins on shot 1</span>
-          </div>
-
-          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Spare Conversion %</span>
-            <div id="stat-spare-pct" class="text-xl font-black text-emerald-400">0.0%</div>
-            <span class="text-[9px] text-slate-500 block" id="stat-spare-count">0 / 0 converted</span>
-          </div>
-
-          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Open Frames %</span>
-            <div id="stat-open-pct" class="text-xl font-black text-rose-400">0.0%</div>
-            <span class="text-[9px] text-slate-500 block" id="stat-open-count">0 open frames</span>
-          </div>
+        <div class="form-group">
+          <label>Break (40')</label>
+          <input type="number" id="tr-break" value="7" min="1" max="39" oninput="drawLane()" />
+        </div>
+        <div class="form-group">
+          <label>Pocket (60')</label>
+          <input type="number" id="tr-pocket" value="17.5" step="0.5" min="1" max="39" oninput="drawLane()" />
         </div>
       </div>
 
-      <!-- Additional Detailed Metrics -->
-      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 border-b border-slate-700 pb-2">Breakdown & Totals</h3>
-        <div class="space-y-2 text-xs text-slate-300">
-          <div class="flex justify-between py-1 border-b border-slate-700/50">
-            <span class="text-slate-400">Total Pinfall:</span>
-            <span id="stat-total-pinfall" class="font-bold text-slate-100">0</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-700/50">
-            <span class="text-slate-400">Total Strikes Thrown:</span>
-            <span id="stat-strikes-count" class="font-bold text-amber-400">0</span>
-          </div>
-          <div class="flex justify-between py-1 border-b border-slate-700/50">
-            <span class="text-slate-400">Strike Percentage:</span>
-            <span id="stat-strike-pct" class="font-bold text-amber-400">0.0%</span>
-          </div>
-          <div class="flex justify-between py-1">
-            <span class="text-slate-400">High Game Recorded:</span>
-            <span id="stat-high-game" class="font-bold text-sky-400">0</span>
-          </div>
-        </div>
+      <canvas id="laneCanvas" width="360" height="700"></canvas>
+    </div>
+  </div>
+
+  <!-- ANALYTICS VIEW -->
+  <div id="view-stats" class="view-panel">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="desc">Scoring Average</div>
+        <div class="num" id="st-avg">0.0</div>
       </div>
-    </section>
-
-  </main>
-
-  <!-- GAME PLAN & REFERENCE GUIDE MODAL -->
-  <div id="guide-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4 overflow-y-auto">
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
-      
-      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-sky-400">⚡ 5-Game Execution Plan</h2>
-        <button onclick="toggleGuideModal(false)" class="text-slate-400 hover:text-white text-lg font-bold px-2 py-0.5 rounded">✕</button>
+      <div class="stat-card">
+        <div class="desc">First Ball Average</div>
+        <div class="num" id="st-fba">0.0</div>
       </div>
-
-      <!-- Delivery Profile -->
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-1 text-xs">
-        <div class="font-bold text-slate-200 border-b border-slate-800 pb-1">🎯 Delivery Specs</div>
-        <div class="grid grid-cols-2 gap-2 text-slate-300 pt-1">
-          <div>Speed: <span class="text-sky-300 font-semibold">16.5 mph</span></div>
-          <div>Rev Rate: <span class="text-sky-300 font-semibold">410 RPM</span></div>
-          <div>Axis Tilt: <span class="text-sky-300 font-semibold">10°</span></div>
-          <div>Axis Rotation: <span class="text-sky-300 font-semibold">45°</span></div>
-        </div>
+      <div class="stat-card">
+        <div class="desc">Spare Conversion %</div>
+        <div class="num" id="st-spare">0%</div>
       </div>
-
-      <!-- Game Plan Strategy -->
-      <div class="space-y-2.5 text-xs">
-        <div class="p-3 bg-slate-900 rounded-xl border-l-4 border-amber-500 space-y-1">
-          <div class="flex justify-between font-bold text-slate-200">
-            <span>Fresh Oil (Games 1–2)</span>
-            <span class="text-amber-400">Viking Conquest</span>
-          </div>
-          <p class="text-slate-300"><strong>Baseline:</strong> 28 at feet $\rightarrow$ 10 at arrows $\rightarrow$ 6–8 breakpoint downlane.</p>
-          <p class="text-slate-400">Keep speed steady (16.5 mph). Make 1-and-1 leftward shifts as heads begin to break down.</p>
-        </div>
-
-        <div class="p-3 bg-slate-900 rounded-xl border-l-4 border-purple-500 space-y-1">
-          <div class="flex justify-between font-bold text-slate-200">
-            <span>Transition Trigger (Game 3)</span>
-            <span class="text-purple-400">Zen Soul</span>
-          </div>
-          <p class="text-slate-300"><strong>The Trigger:</strong> Conquest burns up early & leaves 3–6 pin deflection.</p>
-          <p class="text-slate-400"><strong>Action:</strong> Put Conquest away immediately. Move feet to <strong class="text-purple-300">30-15</strong> with Zen Soul. Cleaner hybrid shell glides past burned heads!</p>
-        </div>
-
-        <div class="p-3 bg-slate-900 rounded-xl border-l-4 border-sky-500 space-y-1">
-          <div class="flex justify-between font-bold text-slate-200">
-            <span>Deep Inside / Carrydown (Games 4–5)</span>
-            <span class="text-sky-400">Zen Soul</span>
-          </div>
-          <p class="text-slate-300"><strong>Deep Lines:</strong> Inside 30-15 baseline.</p>
-          <p class="text-slate-400"><strong>2-to-1 Rule:</strong> Move feet 2 left, eyes 1 left to open launch angle toward outer friction when oil carries down.</p>
-        </div>
+      <div class="stat-card">
+        <div class="desc">Open Frames</div>
+        <div class="num" id="st-opens">0 (0%)</div>
       </div>
+    </div>
+  </div>
 
-      <!-- Diagnostic Quick Guide -->
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2 text-xs">
-        <div class="font-bold text-sky-400 border-b border-slate-800 pb-1">🚨 Quick Fixes</div>
-        <div class="space-y-1.5 text-slate-300">
-          <p><strong class="text-red-400">Misses High / Early Hook:</strong> Move feet 1–2 boards LEFT into central oil.</p>
-          <p><strong class="text-amber-400">3-6 Pin Deflection:</strong> Conquest is burning out early. <span class="text-purple-300 font-bold">SWITCH TO ZEN SOUL</span>. Do not step right!</p>
-          <p><strong class="text-sky-400">Skids on Carrydown:</strong> Apply 2-to-1 rule to project ball out to board 6–7 friction.</p>
-        </div>
+  <!-- HISTORY VIEW -->
+  <div id="view-hist" class="view-panel">
+    <div class="card">
+      <div class="card-title">Saved Sessions</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- GAME PLAN MODAL -->
+  <div id="guide-modal">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2 style="font-size: 1rem; color: var(--accent-color);">5-Game Execution Plan</h2>
+        <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Close</button>
       </div>
-
-      <button onclick="toggleGuideModal(false)" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2.5 rounded-xl text-xs transition">
-        Close Game Plan
-      </button>
+      <div class="guide-section">
+        <h3>Baseline Setup</h3>
+        <p><strong>Profile:</strong> 16.5 mph | 410 RPM | 10° Tilt | 45° Rotation</p>
+        <p><strong>Fresh Baseline:</strong> Viking Conquest (28-10-7)</p>
+      </div>
+      <div class="guide-section">
+        <h3>Transition Trigger</h3>
+        <p>Switch to <strong>Zen Soul (30-15-8)</strong> when Viking exhibits 3-6 pin deflection (early roll-out).</p>
+      </div>
+      <div class="guide-section">
+        <h3>Deep Adjustments</h3>
+        <p>Apply <strong>2-to-1 rule</strong> (move feet 2, eyes 1) to open angles as oil breaks down.</p>
+      </div>
     </div>
   </div>
 
   <script>
-    let activeGameIdx = 1;
-    let gamesData = {};
-    let activeSessionId = null;
+    let activeGame = 1;
+    let sessionData = { id: Date.now(), date: new Date().toISOString().split('T')[0], center: '', notes: '', games: {} };
 
-    function initGamesData() {
-      for (let g = 1; g <= 5; g++) {
-        gamesData[g] = {
-          ball: g <= 2 ? 'Viking Conquest' : 'Zen Soul',
-          frames: Array.from({ length: 10 }, (_, i) => ({
-            b1: '',
-            b2: '',
-            b3: '',
-            line: i === 0 ? (g <= 2 ? '28-10' : '30-15') : '',
-            note: ''
-          }))
-        };
+    for (let g = 1; g <= 5; g++) {
+      sessionData.games[g] = { frames: {} };
+      for (let f = 1; f <= 10; f++) {
+        sessionData.games[g].frames[f] = { b1: '', b2: '', b3: '', line: '', note: '' };
       }
     }
 
-    function switchMainTab(tab) {
-      document.getElementById('view-active').classList.toggle('hidden', tab !== 'active');
-      document.getElementById('view-history').classList.toggle('hidden', tab !== 'history');
-      document.getElementById('view-analytics').classList.toggle('hidden', tab !== 'analytics');
-
-      const tabs = ['active', 'history', 'analytics'];
-      tabs.forEach(t => {
-        const btn = document.getElementById(`mtab-${t}`);
-        if (t === tab) {
-          btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition";
-        } else {
-          btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition";
-        }
-      });
-
-      if (tab === 'history') renderHistoryList();
-      if (tab === 'analytics') renderAnalytics();
+    function init() {
+      document.getElementById('session-date').value = sessionData.date;
+      loadCurrentSession();
+      renderGames();
+      switchGame(1);
+      drawLane();
+      calcAnalytics();
+      renderHistory();
     }
 
-    function selectGameTab(gNum) {
-      activeGameIdx = gNum;
-      for (let i = 1; i <= 5; i++) {
-        const tab = document.getElementById(`gtab-${i}`);
-        if (i === gNum) {
-          tab.className = "flex-1 py-1.5 px-2 bg-sky-500 text-slate-950 rounded-lg text-xs font-bold";
-        } else {
-          tab.className = "flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold";
-        }
-      }
-      document.getElementById('active-game-ball').value = gamesData[activeGameIdx].ball;
-      renderActiveGameFrames();
-      calculateScores();
-    }
-
-    function updateActiveGameBall(val) {
-      gamesData[activeGameIdx].ball = val;
-      autoSave();
-    }
-
-    function updateFrameData(fIdx, field, val) {
-      gamesData[activeGameIdx].frames[fIdx][field] = val;
-
-      // Reset Ball 2 if Ball 1 becomes Strike on frames 1-9
-      if (field === 'b1' && fIdx < 9 && val === 'X') {
-        gamesData[activeGameIdx].frames[fIdx].b2 = '';
-      }
-
-      renderActiveGameFrames();
-      calculateScores();
-      autoSave();
-    }
-
-    function buildOptions(optionsArray, selectedVal) {
-      return optionsArray.map(opt => {
-        const isSel = String(opt.val) === String(selectedVal) ? 'selected' : '';
-        return `<option value="${opt.val}" ${isSel}>${opt.label}</option>`;
-      }).join('');
-    }
-
-    function renderActiveGameFrames() {
-      const container = document.getElementById('frames-container');
+    function renderGames() {
+      const container = document.getElementById('game-views');
       container.innerHTML = '';
-      const frames = gamesData[activeGameIdx].frames;
-
-      frames.forEach((f, idx) => {
-        const is10th = idx === 9;
-
-        // Ball 1 options (all frames)
-        const b1Opts = [
-          { val: '', label: '-' },
-          { val: 'X', label: 'X (Strike)' },
-          { val: '0', label: '0 (Gutter)' },
-          { val: '1', label: '1 pin' },
-          { val: '2', label: '2 pins' },
-          { val: '3', label: '3 pins' },
-          { val: '4', label: '4 pins' },
-          { val: '5', label: '5 pins' },
-          { val: '6', label: '6 pins' },
-          { val: '7', label: '7 pins' },
-          { val: '8', label: '8 pins' },
-          { val: '9', label: '9 pins' }
-        ];
-
-        // Ball 2 options for frames 1-9
-        let b2Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
-        let b2Disabled = false;
-
-        if (!is10th) {
-          if (f.b1 === 'X') {
-            b2Disabled = true;
-            b2Opts = [{ val: '', label: '-' }];
-          } else if (f.b1 && f.b1 !== '0') {
-            const b1Num = parseInt(f.b1) || 0;
-            const maxRemaining = 9 - b1Num;
-            for (let p = 1; p <= maxRemaining; p++) {
-              b2Opts.push({ val: String(p), label: `${p} pin${p > 1 ? 's' : ''}` });
-            }
-          } else {
-            for (let p = 1; p <= 9; p++) {
-              b2Opts.push({ val: String(p), label: `${p} pins` });
-            }
-          }
-        } else {
-          // 10th frame Ball 2 options
-          if (f.b1 === 'X') {
-            b2Opts = b1Opts; // Can throw strike or 0-9
-          } else if (f.b1 && f.b1 !== '') {
-            b2Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
-            const b1Num = parseInt(f.b1) || 0;
-            const maxRemaining = 9 - b1Num;
-            for (let p = 1; p <= maxRemaining; p++) {
-              b2Opts.push({ val: String(p), label: `${p} pins` });
-            }
-          }
-        }
-
-        // Ball 3 options (10th frame only)
-        let b3Opts = [{ val: '', label: '-' }];
-        let b3Disabled = true;
-
-        if (is10th) {
-          if (f.b1 === 'X' || f.b2 === '/') {
-            b3Disabled = false;
-            if (f.b2 === 'X' || f.b1 === 'X') {
-              b3Opts = b1Opts;
-            } else if (f.b2 === '/') {
-              b3Opts = b1Opts;
-            } else {
-              // open on ball 2 after strike
-              b3Opts = [{ val: '', label: '-' }, { val: '/', label: '/ (Spare)' }, { val: '0', label: '- (Gutter)' }];
-              const b2Num = parseInt(f.b2) || 0;
-              for (let p = 1; p <= (9 - b2Num); p++) {
-                b3Opts.push({ val: String(p), label: `${p} pins` });
-              }
-            }
-          }
-        }
-
-        const frameHtml = `
-          <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-2.5">
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold text-sky-400">Frame ${idx + 1}</span>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] text-slate-400">Target Line:</span>
-                <input type="text" value="${f.line || ''}" oninput="updateFrameData(${idx}, 'line', this.value)" placeholder="28-10" class="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs text-sky-200 w-20 text-center focus:outline-none focus:border-sky-500">
-              </div>
-            </div>
-
-            <!-- Frame Balls Dropdowns -->
-            <div class="grid ${is10th ? 'grid-cols-3' : 'grid-cols-2'} gap-2">
-              <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 1</label>
-                <select onchange="updateFrameData(${idx}, 'b1', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500">
-                  ${buildOptions(b1Opts, f.b1)}
-                </select>
-              </div>
-              <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 2</label>
-                <select ${b2Disabled ? 'disabled' : ''} onchange="updateFrameData(${idx}, 'b2', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500 disabled:opacity-30">
-                  ${buildOptions(b2Opts, f.b2)}
-                </select>
-              </div>
-              ${is10th ? `
-              <div>
-                <label class="block text-[9px] text-slate-400 mb-0.5">Ball 3</label>
-                <select ${b3Disabled ? 'disabled' : ''} onchange="updateFrameData(${idx}, 'b3', this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-lg text-center py-1.5 text-xs text-slate-100 font-bold uppercase focus:outline-none focus:border-sky-500 disabled:opacity-30">
-                  ${buildOptions(b3Opts, f.b3)}
-                </select>
-              </div>
-              ` : ''}
-            </div>
-
-            <!-- Frame Note Input -->
-            <div>
-              <input type="text" value="${f.note || ''}" oninput="updateFrameData(${idx}, 'note', this.value)" placeholder="Frame comment (e.g. 10-pin leave, light hit)..." class="w-full bg-slate-800/60 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-sky-500">
-            </div>
-          </div>
-        `;
-        container.insertAdjacentHTML('beforeend', frameHtml);
-      });
-    }
-
-    // Traditional Bowling Scoring Algorithm & Max Score Calculator
-    function calculateScores() {
-      let seriesTotal = 0;
-
       for (let g = 1; g <= 5; g++) {
-        const frames = gamesData[g].frames;
-        let gameScore = 0;
-
-        for (let i = 0; i < 10; i++) {
-          const f = frames[i];
-          const b1 = (f.b1 || '').trim().toUpperCase();
-          const b2 = (f.b2 || '').trim().toUpperCase();
-          const b3 = (f.b3 || '').trim().toUpperCase();
-
-          if (b1 === 'X' || b1 === '10') {
-            gameScore += 10;
-            if (i < 9) {
-              const nextF = frames[i + 1];
-              const nextB1 = (nextF.b1 || '').trim().toUpperCase();
-              if (nextB1 === 'X' || nextB1 === '10') {
-                gameScore += 10;
-                if (i < 8) {
-                  const nextNextF = frames[i + 2];
-                  const nnB1 = (nextNextF.b1 || '').trim().toUpperCase();
-                  gameScore += (nnB1 === 'X' || nnB1 === '10') ? 10 : (parseInt(nnB1) || 0);
-                } else {
-                  const nextB2 = (nextF.b2 || '').trim().toUpperCase();
-                  gameScore += (nextB2 === 'X' || nextB2 === '10') ? 10 : (parseInt(nextB2) || 0);
-                }
-              } else {
-                gameScore += parseInt(nextB1) || 0;
-                const nextB2 = (nextF.b2 || '').trim().toUpperCase();
-                if (nextB2 === '/') {
-                  gameScore += 10 - (parseInt(nextB1) || 0);
-                } else {
-                  gameScore += parseInt(nextB2) || 0;
-                }
-              }
-            } else {
-              if (b2 === 'X' || b2 === '10') gameScore += 10;
-              else gameScore += parseInt(b2) || 0;
-
-              if (b3 === 'X' || b3 === '10') gameScore += 10;
-              else if (b3 === '/') gameScore += 10 - (parseInt(b2) || 0);
-              else gameScore += parseInt(b3) || 0;
-            }
-          } else if (b2 === '/') {
-            gameScore += 10;
-            if (i < 9) {
-              const nextB1 = (frames[i + 1].b1 || '').trim().toUpperCase();
-              gameScore += (nextB1 === 'X' || nextB1 === '10') ? 10 : (parseInt(nextB1) || 0);
-            } else {
-              if (b3 === 'X' || b3 === '10') gameScore += 10;
-              else gameScore += parseInt(b3) || 0;
-            }
-          } else {
-            gameScore += (parseInt(b1) || 0) + (parseInt(b2) || 0);
-          }
+        const gameDiv = document.createElement('div');
+        gameDiv.id = `game-view-${g}`;
+        gameDiv.style.display = g === 1 ? 'block' : 'none';
+        let framesHTML = '';
+        for (let f = 1; f <= 10; f++) {
+          const is10 = f === 10;
+          const fr = sessionData.games[g].frames[f];
+          framesHTML += `
+            <div class="frame-card">
+              <div class="frame-header">
+                <span>FRAME ${f}</span>
+                <span id="score-g${g}-f${f}">-</span>
+              </div>
+              <div class="frame-inputs ${is10 ? 'f10' : ''}">
+                <select onchange="updateShot(${g}, ${f}, 'b1', this.value)">${getOptionsB1(fr.b1)}</select>
+                <select id="sel-g${g}-f${f}-b2" onchange="updateShot(${g}, ${f}, 'b2', this.value)">${getOptionsB2(fr.b1, fr.b2, is10)}</select>
+                ${is10 ? `<select onchange="updateShot(${g}, ${f}, 'b3', this.value)">${getOptionsB1(fr.b3)}</select>` : ''}
+                <input type="text" placeholder="Line (28-10)" value="${fr.line || ''}" onchange="updateShot(${g}, ${f}, 'line', this.value)" />
+              </div>
+              <input type="text" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Frame note / comment..." value="${fr.note || ''}" onchange="updateShot(${g}, ${f}, 'note', this.value)" />
+            </div>
+          `;
         }
-
-        gamesData[g].totalScore = gameScore;
-        seriesTotal += gameScore;
-
-        // Calculate Max Possible Score for Active Game
-        if (g === activeGameIdx) {
-          document.getElementById('active-game-score').innerText = gameScore;
-          document.getElementById('active-game-max-score').innerText = calculateMaxPossibleScore(frames);
-        }
+        gameDiv.innerHTML = `<div class="frames-container">${framesHTML}</div>`;
+        container.appendChild(gameDiv);
       }
-
-      document.getElementById('block-series-total').innerText = `Series: ${seriesTotal}`;
-      return seriesTotal;
     }
 
-    // Engine to project maximum possible score (assuming strikes on all unthrown remaining shots)
-    function calculateMaxPossibleScore(frames) {
-      // Build hypothetical frame copy where unthrown shots become Strikes ('X')
-      const simFrames = frames.map((f, idx) => {
-        const is10 = idx === 9;
-        let simB1 = f.b1;
-        let simB2 = f.b2;
-        let simB3 = f.b3;
+    function getOptionsB1(val) {
+      let opts = '<option value="">-</option>';
+      opts += `<option value="X" ${val === 'X' ? 'selected' : ''}>X</option>`;
+      for (let i = 9; i >= 0; i--) {
+        const str = i === 0 ? '-' : String(i);
+        opts += `<option value="${str}" ${val === str ? 'selected' : ''}>${str}</option>`;
+      }
+      return opts;
+    }
 
-        if (!simB1) {
-          simB1 = 'X';
-          if (!is10) {
-            simB2 = '';
+    function getOptionsB2(b1, b2, is10) {
+      if (!is10 && b1 === 'X') return '<option value="">-</option>';
+      let opts = '<option value="">-</option>';
+      opts += `<option value="/" ${b2 === '/' ? 'selected' : ''}>/</option>`;
+      for (let i = 9; i >= 0; i--) {
+        const str = i === 0 ? '-' : String(i);
+        opts += `<option value="${str}" ${b2 === str ? 'selected' : ''}>${str}</option>`;
+      }
+      return opts;
+    }
+
+    function updateShot(g, f, key, val) {
+      sessionData.games[g].frames[f][key] = val;
+      if (key === 'b1') renderGames(); // Re-render to update B2 available options dynamically
+      autoSave();
+      recalcScores();
+    }
+
+    function switchView(viewKey) {
+      document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+        const keys = ['log', 'traj', 'stats', 'hist'];
+        btn.classList.toggle('active', keys[idx] === viewKey);
+      });
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`view-${viewKey}`).classList.add('active');
+      if (viewKey === 'traj') drawLane();
+      if (viewKey === 'stats') calcAnalytics();
+      if (viewKey === 'hist') renderHistory();
+    }
+
+    function switchGame(g) {
+      activeGame = g;
+      document.querySelectorAll('.g-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === g));
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`game-view-${i}`).style.display = i === g ? 'block' : 'none';
+      }
+      recalcScores();
+    }
+
+    function recalcScores() {
+      let seriesTotal = 0;
+      for (let g = 1; g <= 5; g++) {
+        let currentScore = 0;
+        let maxPossible = 300;
+        // Simple scoring estimation engine
+        for (let f = 1; f <= 10; f++) {
+          const fr = sessionData.games[g].frames[f];
+          if (fr.b1 === 'X') currentScore += 10;
+          else if (fr.b2 === '/') currentScore += 10;
+          else {
+            const v1 = parseInt(fr.b1) || 0;
+            const v2 = parseInt(fr.b2) || 0;
+            currentScore += (v1 + v2);
           }
         }
-
-        if (is10) {
-          if (simB1 === 'X' && !simB2) simB2 = 'X';
-          if ((simB1 === 'X' || simB2 === '/') && !simB3) simB3 = 'X';
-          if (simB1 && simB1 !== 'X' && !simB2) {
-            simB2 = '/';
-            if (!simB3) simB3 = 'X';
-          }
-        } else {
-          if (simB1 && simB1 !== 'X' && !simB2) {
-            simB2 = '/';
-          }
+        seriesTotal += currentScore;
+        if (g === activeGame) {
+          document.getElementById('disp-curr-score').innerText = currentScore;
+          document.getElementById('disp-max-score').innerText = maxPossible;
         }
+      }
+      document.getElementById('disp-series-total').innerText = seriesTotal;
+    }
 
-        return { b1: simB1, b2: simB2, b3: simB3 };
+    function setPreset(lay, arr, brk) {
+      document.getElementById('tr-laydown').value = lay;
+      document.getElementById('tr-arrow').value = arr;
+      document.getElementById('tr-break').value = brk;
+      drawLane();
+    }
+
+    function drawLane() {
+      const cvs = document.getElementById('laneCanvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      const w = cvs.width;
+      const h = cvs.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Board coordinates (1-39 right to left)
+      const bToX = b => w - (b / 40) * w;
+
+      // Draw boards
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 39; i++) {
+        ctx.beginPath();
+        ctx.moveTo(bToX(i), 0);
+        ctx.lineTo(bToX(i), h);
+        ctx.stroke();
+      }
+
+      // Foul Line (bottom)
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, h - 20);
+      ctx.lineTo(w, h - 20);
+      ctx.stroke();
+
+      // Arrows (15ft -> h - 170)
+      ctx.fillStyle = '#38bdf8';
+      [5, 10, 15, 20, 25, 30, 35].forEach(b => {
+        ctx.beginPath();
+        ctx.arc(bToX(b), h - 170, 3, 0, Math.PI * 2);
+        ctx.fill();
       });
 
-      let maxScore = 0;
-      for (let i = 0; i < 10; i++) {
-        const f = simFrames[i];
-        const b1 = (f.b1 || '').trim().toUpperCase();
-        const b2 = (f.b2 || '').trim().toUpperCase();
-        const b3 = (f.b3 || '').trim().toUpperCase();
+      // Breakpoint Zone (35-42ft)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.05)';
+      ctx.fillRect(0, h - 480, w, 80);
 
-        if (b1 === 'X' || b1 === '10') {
-          maxScore += 10;
-          if (i < 9) {
-            const nextF = simFrames[i + 1];
-            const nextB1 = (nextF.b1 || '').trim().toUpperCase();
-            if (nextB1 === 'X' || nextB1 === '10') {
-              maxScore += 10;
-              if (i < 8) {
-                const nextNextF = simFrames[i + 2];
-                const nnB1 = (nextNextF.b1 || '').trim().toUpperCase();
-                maxScore += (nnB1 === 'X' || nnB1 === '10') ? 10 : (parseInt(nnB1) || 0);
-              } else {
-                const nextB2 = (nextF.b2 || '').trim().toUpperCase();
-                maxScore += (nextB2 === 'X' || nextB2 === '10') ? 10 : (parseInt(nextB2) || 0);
-              }
-            } else {
-              maxScore += parseInt(nextB1) || 0;
-              const nextB2 = (nextF.b2 || '').trim().toUpperCase();
-              if (nextB2 === '/') maxScore += 10 - (parseInt(nextB1) || 0);
-              else maxScore += parseInt(nextB2) || 0;
-            }
-          } else {
-            if (b2 === 'X' || b2 === '10') maxScore += 10;
-            else maxScore += parseInt(b2) || 0;
+      // Pin Deck (top)
+      ctx.fillStyle = '#f8fafc';
+      [7, 8, 9, 10, 4, 5, 6, 2, 3, 1].forEach((p, idx) => {
+        const pinBoards = [34, 26, 18, 10, 30, 22, 14, 26, 18, 20];
+        const pinY = [40, 40, 40, 40, 60, 60, 60, 80, 80, 100];
+        ctx.beginPath();
+        ctx.arc(bToX(pinBoards[idx]), pinY[idx], 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
 
-            if (b3 === 'X' || b3 === '10') maxScore += 10;
-            else if (b3 === '/') maxScore += 10 - (parseInt(b2) || 0);
-            else maxScore += parseInt(b3) || 0;
-          }
-        } else if (b2 === '/') {
-          maxScore += 10;
-          if (i < 9) {
-            const nextB1 = (simFrames[i + 1].b1 || '').trim().toUpperCase();
-            maxScore += (nextB1 === 'X' || nextB1 === '10') ? 10 : (parseInt(nextB1) || 0);
-          } else {
-            if (b3 === 'X' || b3 === '10') maxScore += 10;
-            else maxScore += parseInt(b3) || 0;
-          }
-        } else {
-          maxScore += (parseInt(b1) || 0) + (parseInt(b2) || 0);
-        }
-      }
-      return maxScore;
+      // Trajectory curve
+      const lay = parseFloat(document.getElementById('tr-laydown').value) || 28;
+      const arr = parseFloat(document.getElementById('tr-arrow').value) || 10;
+      const brk = parseFloat(document.getElementById('tr-break').value) || 7;
+      const pkt = parseFloat(document.getElementById('tr-pocket').value) || 17.5;
+
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(bToX(lay), h - 20);
+      ctx.quadraticCurveTo(bToX(arr), h - 170, bToX(brk), h - 440);
+      ctx.quadraticCurveTo(bToX(brk), h - 460, bToX(pkt), 100);
+      ctx.stroke();
     }
 
-    function toggleGuideModal(show) {
-      document.getElementById('guide-modal').classList.toggle('hidden', !show);
+    function calcAnalytics() {
+      let totalPinfall = 0, completedGames = 0, totalB1 = 0, b1Count = 0, sparesMade = 0, spareOpp = 0, opens = 0, totalFrames = 0;
+      let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
+      
+      history.forEach(sess => {
+        for (let g = 1; g <= 5; g++) {
+          let gScore = 0;
+          for (let f = 1; f <= 10; f++) {
+            const fr = sess.games[g]?.frames[f];
+            if (!fr) continue;
+            totalFrames++;
+            if (fr.b1 === 'X') {
+              gScore += 10;
+              totalB1 += 10; b1Count++;
+            } else if (fr.b1) {
+              const b1Val = parseInt(fr.b1) || 0;
+              totalB1 += b1Val; b1Count++;
+              spareOpp++;
+              if (fr.b2 === '/') { sparesMade++; gScore += 10; }
+              else {
+                opens++;
+                gScore += (b1Val + (parseInt(fr.b2) || 0));
+              }
+            }
+          }
+          if (gScore > 0) { totalPinfall += gScore; completedGames++; }
+        }
+      });
+
+      document.getElementById('st-avg').innerText = completedGames ? (totalPinfall / completedGames).toFixed(1) : '0.0';
+      document.getElementById('st-fba').innerText = b1Count ? (totalB1 / b1Count).toFixed(2) : '0.0';
+      document.getElementById('st-spare').innerText = spareOpp ? Math.round((sparesMade / spareOpp) * 100) + '%' : '0%';
+      document.getElementById('st-opens').innerText = totalFrames ? `${opens} (${Math.round((opens / totalFrames) * 100)}%)` : '0 (0%)';
     }
 
     function autoSave() {
-      const payload = {
-        id: activeSessionId || Date.now(),
-        date: document.getElementById('session-date').value,
-        center: document.getElementById('session-center').value,
-        notes: document.getElementById('session-notes').value,
-        gamesData: gamesData
-      };
-      localStorage.setItem('bowling_active_session', JSON.stringify(payload));
+      sessionData.date = document.getElementById('session-date').value;
+      sessionData.center = document.getElementById('session-center').value;
+      sessionData.notes = document.getElementById('session-notes').value;
+      localStorage.setItem('bowling_active_session', JSON.stringify(sessionData));
     }
 
-    function loadSavedSession() {
+    function saveSession() {
+      autoSave();
+      let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
+      history = history.filter(s => s.id !== sessionData.id);
+      history.unshift(sessionData);
+      localStorage.setItem('bowling_history', JSON.stringify(history));
+      alert('Session saved to device history!');
+    }
+
+    function loadCurrentSession() {
       const saved = localStorage.getItem('bowling_active_session');
       if (saved) {
-        try {
-          const payload = JSON.parse(saved);
-          activeSessionId = payload.id || null;
-          if (payload.date) document.getElementById('session-date').value = payload.date;
-          if (payload.center) document.getElementById('session-center').value = payload.center;
-          if (payload.notes) document.getElementById('session-notes').value = payload.notes;
-          if (payload.gamesData) gamesData = payload.gamesData;
-
-          document.getElementById('session-editing-id').classList.toggle('hidden', !activeSessionId);
-        } catch (e) { console.error('Failed to parse saved session', e); }
+        try { sessionData = JSON.parse(saved); } catch (e) {}
       }
     }
 
-    function saveSessionToHistory() {
-      autoSave();
-      const seriesTotal = calculateScores();
-      const payload = {
-        id: activeSessionId || Date.now(),
-        date: document.getElementById('session-date').value || new Date().toISOString().split('T')[0],
-        center: document.getElementById('session-center').value || 'Unspecified Center',
-        notes: document.getElementById('session-notes').value || '',
-        gamesData: gamesData,
-        seriesTotal: seriesTotal
-      };
-
-      let history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-      const index = history.findIndex(s => s.id === payload.id);
-      if (index !== -1) {
-        history[index] = payload;
-      } else {
-        history.unshift(payload);
-      }
-
-      localStorage.setItem('bowling_sessions_history', JSON.stringify(history));
-      activeSessionId = payload.id;
-      document.getElementById('session-editing-id').classList.remove('hidden');
-
-      alert('Session saved to History!');
-    }
-
-    function renderHistoryList() {
-      const container = document.getElementById('history-list-container');
-      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-
-      if (history.length === 0) {
-        container.innerHTML = `
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center space-y-2">
-            <p class="text-xs text-slate-400">No saved sessions in history yet.</p>
-            <p class="text-[11px] text-slate-500">Fill in the Active Log tab and tap "Save Session" to store it here.</p>
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      const history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
+      if (!history.length) { list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted)">No saved sessions yet.</p>'; return; }
+      list.innerHTML = history.map(s => `
+        <div class="history-item">
+          <div class="history-info">
+            <h4>${s.date} - ${s.center || 'Unspecified Center'}</h4>
+            <p>${s.notes ? s.notes.substring(0, 40) + '...' : 'No notes'}</p>
           </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = history.map(item => `
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3.5 space-y-2">
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="font-bold text-xs text-slate-100">${item.date}</div>
-              <div class="text-[11px] text-slate-400">${item.center}</div>
-            </div>
-            <span class="text-xs font-bold text-emerald-400 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded">
-              Series: ${item.seriesTotal || 0}
-            </span>
-          </div>
-
-          <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-            <button onclick="loadHistoryItemIntoEditor(${item.id})" class="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
-              ✏️ Load & Edit
-            </button>
-            <button onclick="deleteHistoryItem(${item.id})" class="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1">
-              🗑️ Delete
-            </button>
-          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteHistorySession(${s.id})">Delete</button>
         </div>
       `).join('');
     }
 
-    function loadHistoryItemIntoEditor(id) {
-      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-      const item = history.find(s => s.id === id);
-      if (!item) return;
-
-      activeSessionId = item.id;
-      gamesData = item.gamesData;
-      document.getElementById('session-date').value = item.date || '';
-      document.getElementById('session-center').value = item.center || '';
-      document.getElementById('session-notes').value = item.notes || '';
-      document.getElementById('session-editing-id').classList.remove('hidden');
-
-      autoSave();
-      selectGameTab(1);
-      switchMainTab('active');
-    }
-
-    function deleteHistoryItem(id) {
-      if (!confirm('Are you sure you want to delete this session log?')) return;
-
-      let history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-      history = history.filter(s => s.id !== id);
-      localStorage.setItem('bowling_sessions_history', JSON.stringify(history));
-
-      if (activeSessionId === id) {
-        activeSessionId = null;
-        document.getElementById('session-editing-id').classList.add('hidden');
+    function deleteHistorySession(id) {
+      if (confirm('Delete this session?')) {
+        let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
+        history = history.filter(s => s.id !== id);
+        localStorage.setItem('bowling_history', JSON.stringify(history));
+        renderHistory();
+        calcAnalytics();
       }
-
-      renderHistoryList();
     }
 
-    function renderAnalytics() {
-      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-
-      if (history.length === 0) {
-        document.getElementById('stat-scoring-avg').innerText = '0.0';
-        document.getElementById('stat-first-ball-avg').innerText = '0.00';
-        document.getElementById('stat-spare-pct').innerText = '0.0%';
-        document.getElementById('stat-open-pct').innerText = '0.0%';
-        document.getElementById('stat-games-count').innerText = '0 games played';
-        document.getElementById('stat-spare-count').innerText = '0 / 0 converted';
-        document.getElementById('stat-open-count').innerText = '0 open frames';
-        document.getElementById('stat-total-pinfall').innerText = '0';
-        document.getElementById('stat-strikes-count').innerText = '0';
-        document.getElementById('stat-strike-pct').innerText = '0.0%';
-        document.getElementById('stat-high-game').innerText = '0';
-        return;
-      }
-
-      let totalPinfall = 0;
-      let totalGames = 0;
-      let totalFirstBallPins = 0;
-      let totalFirstBallShots = 0;
-
-      let spareOpportunities = 0;
-      let spareConversions = 0;
-      let totalFrames = 0;
-      let openFramesCount = 0;
-      let totalStrikes = 0;
-      let highGame = 0;
-
-      history.forEach(session => {
-        if (!session.gamesData) return;
-
-        for (let g = 1; g <= 5; g++) {
-          const game = session.gamesData[g];
-          if (!game || !game.frames) continue;
-
-          let gameScore = game.totalScore || 0;
-          if (gameScore > highGame) highGame = gameScore;
-
-          let hasEntries = game.frames.some(f => (f.b1 || '').trim() !== '');
-          if (!hasEntries) continue;
-
-          totalGames++;
-          totalPinfall += gameScore;
-
-          game.frames.forEach((f) => {
-            const b1 = (f.b1 || '').trim().toUpperCase();
-            const b2 = (f.b2 || '').trim().toUpperCase();
-
-            if (!b1 && !b2) return;
-            totalFrames++;
-
-            if (b1 === 'X' || b1 === '10') {
-              totalStrikes++;
-              totalFirstBallPins += 10;
-              totalFirstBallShots++;
-            } else {
-              const b1Pins = parseInt(b1) || 0;
-              totalFirstBallPins += b1Pins;
-              totalFirstBallShots++;
-
-              spareOpportunities++;
-              if (b2 === '/') {
-                spareConversions++;
-              } else {
-                openFramesCount++;
-              }
-            }
-          });
-        }
-      });
-
-      const scoringAvg = totalGames > 0 ? (totalPinfall / totalGames).toFixed(1) : '0.0';
-      const firstBallAvg = totalFirstBallShots > 0 ? (totalFirstBallPins / totalFirstBallShots).toFixed(2) : '0.00';
-      const sparePct = spareOpportunities > 0 ? ((spareConversions / spareOpportunities) * 100).toFixed(1) : '0.0';
-      const openPct = totalFrames > 0 ? ((openFramesCount / totalFrames) * 100).toFixed(1) : '0.0';
-      const strikePct = totalFirstBallShots > 0 ? ((totalStrikes / totalFirstBallShots) * 100).toFixed(1) : '0.0';
-
-      document.getElementById('stat-scoring-avg').innerText = scoringAvg;
-      document.getElementById('stat-first-ball-avg').innerText = firstBallAvg;
-      document.getElementById('stat-spare-pct').innerText = `${sparePct}%`;
-      document.getElementById('stat-open-pct').innerText = `${openPct}%`;
-      document.getElementById('stat-games-count').innerText = `${totalGames} games logged`;
-      document.getElementById('stat-spare-count').innerText = `${spareConversions} / ${spareOpportunities} converted`;
-      document.getElementById('stat-open-count').innerText = `${openFramesCount} open frames`;
-      document.getElementById('stat-total-pinfall').innerText = totalPinfall;
-      document.getElementById('stat-strikes-count').innerText = totalStrikes;
-      document.getElementById('stat-strike-pct').innerText = `${strikePct}%`;
-      document.getElementById('stat-high-game').innerText = highGame;
-    }
-
-    function clearSession() {
-      if (confirm('Are you sure you want to clear the current active editor log?')) {
+    function clearCurrentSession() {
+      if (confirm('Clear active session?')) {
         localStorage.removeItem('bowling_active_session');
-        activeSessionId = null;
-        document.getElementById('session-center').value = '';
-        document.getElementById('session-notes').value = '';
-        document.getElementById('session-editing-id').classList.add('hidden');
-        initGamesData();
-        selectGameTab(1);
+        location.reload();
       }
     }
 
-    function exportToCSV() {
+    function toggleGuide() {
+      const m = document.getElementById('guide-modal');
+      m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function exportCSV() {
       autoSave();
-      const date = document.getElementById('session-date').value || new Date().toISOString().split('T')[0];
-      const center = document.getElementById('session-center').value || 'N/A';
-      const notes = (document.getElementById('session-notes').value || '').replace(/"/g, '""');
-
-      let csvRows = [];
-      csvRows.push(['Date', 'Center/Pattern', 'Game', 'Ball Used', 'Game Total', 'Frame', 'Target Line', 'Ball 1', 'Ball 2', 'Ball 3', 'Frame Comment']);
-
-      let seriesTotal = 0;
-
+      let csv = 'Game,Frame,Ball 1,Ball 2,Ball 3,Line,Frame Note\n';
       for (let g = 1; g <= 5; g++) {
-        const game = gamesData[g];
-        const ball = game.ball || '';
-        const gameTotal = game.totalScore || 0;
-        seriesTotal += gameTotal;
-
-        game.frames.forEach((f, idx) => {
-          const frameComment = (f.note || '').replace(/"/g, '""');
-          csvRows.push([
-            `"${date}"`,
-            `"${center}"`,
-            g,
-            `"${ball}"`,
-            gameTotal,
-            idx + 1,
-            `"${f.line || ''}"`,
-            `"${f.b1 || ''}"`,
-            `"${f.b2 || ''}"`,
-            `"${f.b3 || ''}"`,
-            `"${frameComment}"`
-          ]);
-        });
-      }
-
-      csvRows.push([]);
-      csvRows.push(['Series Total', seriesTotal]);
-      csvRows.push(['Session Takeaways', `"${notes}"`]);
-
-      const csvContent = csvRows.map(row => row.join(',')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `bowling_session_${date}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function exportAllToCSV() {
-      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
-      if (history.length === 0) {
-        alert('No saved sessions to export.');
-        return;
-      }
-
-      let csvRows = [];
-      csvRows.push(['Session Date', 'Center/Pattern', 'Game', 'Ball Used', 'Game Total', 'Frame', 'Target Line', 'Ball 1', 'Ball 2', 'Ball 3', 'Frame Comment']);
-
-      history.forEach(session => {
-        const date = session.date || '';
-        const center = session.center || '';
-        if (!session.gamesData) return;
-
-        for (let g = 1; g <= 5; g++) {
-          const game = session.gamesData[g];
-          if (!game) continue;
-
-          game.frames.forEach((f, idx) => {
-            csvRows.push([
-              `"${date}"`,
-              `"${center}"`,
-              g,
-              `"${game.ball || ''}"`,
-              game.totalScore || 0,
-              idx + 1,
-              `"${f.line || ''}"`,
-              `"${f.b1 || ''}"`,
-              `"${f.b2 || ''}"`,
-              `"${f.b3 || ''}"`,
-              `"${(f.note || '').replace(/"/g, '""')}"`
-            ]);
-          });
+        for (let f = 1; f <= 10; f++) {
+          const fr = sessionData.games[g].frames[f];
+          csv += `${g},${f},${fr.b1},${fr.b2},${fr.b3 || ''},${fr.line},"${(fr.note || '').replace(/"/g, '""')}"\n`;
         }
-      });
-
-      const csvContent = csvRows.map(row => row.join(',')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `all_bowling_history_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      }
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `bowling_session_${sessionData.date}.csv`;
+      a.click();
     }
 
-    // App Startup
-    window.onload = function() {
-      document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
-      initGamesData();
-      loadSavedSession();
-      selectGameTab(1);
-    };
+    window.onload = init;
   </script>
 </body>
 </html>
