@@ -27,83 +27,173 @@
     </div>
   </header>
 
+  <!-- Navigation Tabs -->
+  <nav class="bg-slate-800/80 backdrop-blur border-b border-slate-700/80 sticky top-[53px] z-30 px-2 py-1.5">
+    <div class="max-w-md mx-auto flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-700/60">
+      <button onclick="switchMainTab('active')" id="mtab-active" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition">Active Log</button>
+      <button onclick="switchMainTab('history')" id="mtab-history" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition">History</button>
+      <button onclick="switchMainTab('analytics')" id="mtab-analytics" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition">Analytics</button>
+    </div>
+  </nav>
+
   <!-- Main Content Container -->
   <main class="max-w-md mx-auto p-4 space-y-5">
 
-    <!-- Action Buttons -->
-    <div class="grid grid-cols-3 gap-2">
-      <button onclick="saveSession()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
-        💾 Save Session
-      </button>
-      <button onclick="exportToCSV()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
-        📊 Export CSV
-      </button>
-      <button onclick="clearSession()" class="bg-slate-800 hover:bg-red-900/50 text-red-400 border border-slate-700 hover:border-red-600 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center">
-        🗑️ Clear Log
-      </button>
-    </div>
+    <!-- VIEW 1: ACTIVE SESSION EDITOR -->
+    <section id="view-active" class="space-y-5">
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="saveSessionToHistory()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
+          💾 Save Session
+        </button>
+        <button onclick="exportToCSV()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow flex items-center justify-center gap-1">
+          📊 Export CSV
+        </button>
+        <button onclick="clearSession()" class="bg-slate-800 hover:bg-red-900/50 text-red-400 border border-slate-700 hover:border-red-600 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center">
+          🗑️ Clear Log
+        </button>
+      </div>
 
-    <!-- 1. Session Metadata -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">1. Session Info</h2>
-      <div class="grid grid-cols-2 gap-3">
+      <!-- 1. Session Metadata -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">1. Session Info</h2>
+          <span id="session-editing-id" class="text-[10px] text-amber-400 font-semibold hidden">Editing Saved Log</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Date</label>
+            <input type="date" id="session-date" onchange="autoSave()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Center / Oil Pattern</label>
+            <input type="text" id="session-center" onchange="autoSave()" placeholder="e.g. Classic Bowl / THS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Game Tabs & Frame-by-Frame Tracking -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. Frame-by-Frame Log</h2>
+          <span id="block-series-total" class="text-xs font-bold text-emerald-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700">Series: 0</span>
+        </div>
+
+        <!-- Game Tab Selector -->
+        <div class="flex gap-1 overflow-x-auto pb-1" id="game-tab-bar">
+          <button onclick="selectGameTab(1)" id="gtab-1" class="flex-1 py-1.5 px-2 bg-sky-500 text-slate-950 rounded-lg text-xs font-bold">G1</button>
+          <button onclick="selectGameTab(2)" id="gtab-2" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G2</button>
+          <button onclick="selectGameTab(3)" id="gtab-3" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G3</button>
+          <button onclick="selectGameTab(4)" id="gtab-4" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G4</button>
+          <button onclick="selectGameTab(5)" id="gtab-5" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G5</button>
+        </div>
+
+        <!-- Game Level Controls -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-0.5">Primary Ball Used</label>
+            <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+              <option value="Viking Conquest">Viking Conquest</option>
+              <option value="Zen Soul">Zen Soul</option>
+              <option value="T-Zone / Spare Ball">T-Zone / Spare Ball</option>
+            </select>
+          </div>
+          <div class="flex flex-col justify-center items-end">
+            <span class="text-[10px] text-slate-400">Game Total</span>
+            <span id="active-game-score" class="text-base font-extrabold text-sky-400">0</span>
+          </div>
+        </div>
+
+        <!-- Container for Frames 1 through 10 -->
+        <div id="frames-container" class="space-y-3">
+          <!-- Rendered dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- 3. Overall Session Reflection -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">3. Session Takeaways</h2>
         <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Date</label>
-          <input type="date" id="session-date" onchange="autoSave()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          <label class="block text-[11px] text-slate-400 mb-1">Execution & Lane Conditions Feedback</label>
+          <textarea id="session-notes" onchange="autoSave()" rows="3" placeholder="Notes on transition timing, pin carry, physical execution..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
         </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: SAVED SESSIONS HISTORY -->
+    <section id="view-history" class="hidden space-y-4">
+      <div class="flex justify-between items-center bg-slate-800 border border-slate-700 rounded-xl p-4">
         <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Center / Oil Pattern</label>
-          <input type="text" id="session-center" onchange="autoSave()" placeholder="e.g. Classic Bowl / THS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">Saved Sessions Log</h2>
+          <p class="text-[11px] text-slate-400">Review past sessions or tap to edit</p>
+        </div>
+        <button onclick="exportAllToCSV()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
+          Export All CSV
+        </button>
+      </div>
+
+      <div id="history-list-container" class="space-y-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: OVERALL ANALYTICS DASHBOARD -->
+    <section id="view-analytics" class="hidden space-y-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">Performance Analytics</h2>
+        <p class="text-[11px] text-slate-400">Aggregated stats across all saved sessions in history.</p>
+
+        <!-- KPI Metric Cards -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
+            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Scoring Average</span>
+            <div id="stat-scoring-avg" class="text-xl font-black text-sky-400">0.0</div>
+            <span class="text-[9px] text-slate-500 block" id="stat-games-count">0 games played</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
+            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">First Ball Average</span>
+            <div id="stat-first-ball-avg" class="text-xl font-black text-amber-400">0.00</div>
+            <span class="text-[9px] text-slate-500 block">Avg pins on shot 1</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
+            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Spare Conversion %</span>
+            <div id="stat-spare-pct" class="text-xl font-black text-emerald-400">0.0%</div>
+            <span class="text-[9px] text-slate-500 block" id="stat-spare-count">0 / 0 converted</span>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-700/80 p-3 rounded-xl space-y-1">
+            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Open Frames %</span>
+            <div id="stat-open-pct" class="text-xl font-black text-rose-400">0.0%</div>
+            <span class="text-[9px] text-slate-500 block" id="stat-open-count">0 open frames</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 2. Game Tabs & Frame-by-Frame Tracking -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. Frame-by-Frame Log</h2>
-        <span id="block-series-total" class="text-xs font-bold text-emerald-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-700">Series: 0</span>
-      </div>
-
-      <!-- Game Tab Selector -->
-      <div class="flex gap-1 overflow-x-auto pb-1" id="game-tab-bar">
-        <button onclick="selectGameTab(1)" id="gtab-1" class="flex-1 py-1.5 px-2 bg-sky-500 text-slate-950 rounded-lg text-xs font-bold">G1</button>
-        <button onclick="selectGameTab(2)" id="gtab-2" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G2</button>
-        <button onclick="selectGameTab(3)" id="gtab-3" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G3</button>
-        <button onclick="selectGameTab(4)" id="gtab-4" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G4</button>
-        <button onclick="selectGameTab(5)" id="gtab-5" class="flex-1 py-1.5 px-2 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold">G5</button>
-      </div>
-
-      <!-- Game Level Controls -->
-      <div class="grid grid-cols-2 gap-3 bg-slate-900 p-2.5 rounded-lg border border-slate-700 text-xs">
-        <div>
-          <label class="block text-[10px] text-slate-400 mb-0.5">Primary Ball Used</label>
-          <select id="active-game-ball" onchange="updateActiveGameBall(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
-            <option value="Viking Conquest">Viking Conquest</option>
-            <option value="Zen Soul">Zen Soul</option>
-            <option value="T-Zone / Spare Ball">T-Zone / Spare Ball</option>
-          </select>
-        </div>
-        <div class="flex flex-col justify-center items-end">
-          <span class="text-[10px] text-slate-400">Game Total</span>
-          <span id="active-game-score" class="text-base font-extrabold text-sky-400">0</span>
+      <!-- Additional Detailed Metrics -->
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 border-b border-slate-700 pb-2">Breakdown & Totals</h3>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between py-1 border-b border-slate-700/50">
+            <span class="text-slate-400">Total Pinfall:</span>
+            <span id="stat-total-pinfall" class="font-bold text-slate-100">0</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-700/50">
+            <span class="text-slate-400">Total Strikes Thrown:</span>
+            <span id="stat-strikes-count" class="font-bold text-amber-400">0</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-700/50">
+            <span class="text-slate-400">Strike Percentage:</span>
+            <span id="stat-strike-pct" class="font-bold text-amber-400">0.0%</span>
+          </div>
+          <div class="flex justify-between py-1">
+            <span class="text-slate-400">High Game Recorded:</span>
+            <span id="stat-high-game" class="font-bold text-sky-400">0</span>
+          </div>
         </div>
       </div>
-
-      <!-- Container for Frames 1 through 10 -->
-      <div id="frames-container" class="space-y-3">
-        <!-- Rendered dynamically via JS -->
-      </div>
-    </div>
-
-    <!-- 3. Overall Session Reflection -->
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400 border-b border-slate-700 pb-2">3. Session Takeaways</h2>
-      <div>
-        <label class="block text-[11px] text-slate-400 mb-1">Execution & Lane Conditions Feedback</label>
-        <textarea id="session-notes" onchange="autoSave()" rows="3" placeholder="Notes on transition timing, pin carry, physical execution..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
-      </div>
-    </div>
+    </section>
 
   </main>
 
@@ -176,6 +266,7 @@
   <script>
     let activeGameIdx = 1;
     let gamesData = {};
+    let activeSessionId = null; // null means new, string/number means existing saved log
 
     function initGamesData() {
       for (let g = 1; g <= 5; g++) {
@@ -190,6 +281,25 @@
           }))
         };
       }
+    }
+
+    function switchMainTab(tab) {
+      document.getElementById('view-active').classList.toggle('hidden', tab !== 'active');
+      document.getElementById('view-history').classList.toggle('hidden', tab !== 'history');
+      document.getElementById('view-analytics').classList.toggle('hidden', tab !== 'analytics');
+
+      const tabs = ['active', 'history', 'analytics'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`mtab-${t}`);
+        if (t === tab) {
+          btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-sky-500 text-slate-950 transition";
+        } else {
+          btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-200 transition";
+        }
+      });
+
+      if (tab === 'history') renderHistoryList();
+      if (tab === 'analytics') renderAnalytics();
     }
 
     function selectGameTab(gNum) {
@@ -332,6 +442,7 @@
       }
 
       document.getElementById('block-series-total').innerText = `Series: ${seriesTotal}`;
+      return seriesTotal;
     }
 
     function toggleGuideModal(show) {
@@ -340,6 +451,7 @@
 
     function autoSave() {
       const payload = {
+        id: activeSessionId || Date.now(),
         date: document.getElementById('session-date').value,
         center: document.getElementById('session-center').value,
         notes: document.getElementById('session-notes').value,
@@ -353,24 +465,217 @@
       if (saved) {
         try {
           const payload = JSON.parse(saved);
+          activeSessionId = payload.id || null;
           if (payload.date) document.getElementById('session-date').value = payload.date;
           if (payload.center) document.getElementById('session-center').value = payload.center;
           if (payload.notes) document.getElementById('session-notes').value = payload.notes;
           if (payload.gamesData) gamesData = payload.gamesData;
+
+          document.getElementById('session-editing-id').classList.toggle('hidden', !activeSessionId);
         } catch (e) { console.error('Failed to parse saved session', e); }
       }
     }
 
-    function saveSession() {
+    function saveSessionToHistory() {
       autoSave();
-      alert('Session saved to device local storage!');
+      const seriesTotal = calculateScores();
+      const payload = {
+        id: activeSessionId || Date.now(),
+        date: document.getElementById('session-date').value || new Date().toISOString().split('T')[0],
+        center: document.getElementById('session-center').value || 'Unspecified Center',
+        notes: document.getElementById('session-notes').value || '',
+        gamesData: gamesData,
+        seriesTotal: seriesTotal
+      };
+
+      let history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+      const index = history.findIndex(s => s.id === payload.id);
+      if (index !== -1) {
+        history[index] = payload;
+      } else {
+        history.unshift(payload);
+      }
+
+      localStorage.setItem('bowling_sessions_history', JSON.stringify(history));
+      activeSessionId = payload.id;
+      document.getElementById('session-editing-id').classList.remove('hidden');
+
+      alert('Session saved to History!');
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('history-list-container');
+      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center space-y-2">
+            <p class="text-xs text-slate-400">No saved sessions in history yet.</p>
+            <p class="text-[11px] text-slate-500">Fill in the Active Log tab and tap "Save Session" to store it here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = history.map(item => `
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3.5 space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="font-bold text-xs text-slate-100">${item.date}</div>
+              <div class="text-[11px] text-slate-400">${item.center}</div>
+            </div>
+            <span class="text-xs font-bold text-emerald-400 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded">
+              Series: ${item.seriesTotal || 0}
+            </span>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
+            <button onclick="loadHistoryItemIntoEditor(${item.id})" class="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
+              ✏️ Load & Edit
+            </button>
+            <button onclick="deleteHistoryItem(${item.id})" class="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadHistoryItemIntoEditor(id) {
+      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+      const item = history.find(s => s.id === id);
+      if (!item) return;
+
+      activeSessionId = item.id;
+      gamesData = item.gamesData;
+      document.getElementById('session-date').value = item.date || '';
+      document.getElementById('session-center').value = item.center || '';
+      document.getElementById('session-notes').value = item.notes || '';
+      document.getElementById('session-editing-id').classList.remove('hidden');
+
+      autoSave();
+      selectGameTab(1);
+      switchMainTab('active');
+    }
+
+    function deleteHistoryItem(id) {
+      if (!confirm('Are you sure you want to delete this session log?')) return;
+
+      let history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+      history = history.filter(s => s.id !== id);
+      localStorage.setItem('bowling_sessions_history', JSON.stringify(history));
+
+      if (activeSessionId === id) {
+        activeSessionId = null;
+        document.getElementById('session-editing-id').classList.add('hidden');
+      }
+
+      renderHistoryList();
+    }
+
+    function renderAnalytics() {
+      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+
+      if (history.length === 0) {
+        document.getElementById('stat-scoring-avg').innerText = '0.0';
+        document.getElementById('stat-first-ball-avg').innerText = '0.00';
+        document.getElementById('stat-spare-pct').innerText = '0.0%';
+        document.getElementById('stat-open-pct').innerText = '0.0%';
+        document.getElementById('stat-games-count').innerText = '0 games played';
+        document.getElementById('stat-spare-count').innerText = '0 / 0 converted';
+        document.getElementById('stat-open-count').innerText = '0 open frames';
+        document.getElementById('stat-total-pinfall').innerText = '0';
+        document.getElementById('stat-strikes-count').innerText = '0';
+        document.getElementById('stat-strike-pct').innerText = '0.0%';
+        document.getElementById('stat-high-game').innerText = '0';
+        return;
+      }
+
+      let totalPinfall = 0;
+      let totalGames = 0;
+      let totalFirstBallPins = 0;
+      let totalFirstBallShots = 0;
+
+      let spareOpportunities = 0;
+      let spareConversions = 0;
+      let totalFrames = 0;
+      let openFramesCount = 0;
+      let totalStrikes = 0;
+      let highGame = 0;
+
+      history.forEach(session => {
+        if (!session.gamesData) return;
+
+        for (let g = 1; g <= 5; g++) {
+          const game = session.gamesData[g];
+          if (!game || !game.frames) continue;
+
+          let gameScore = game.totalScore || 0;
+          if (gameScore > highGame) highGame = gameScore;
+
+          // Check if game has entries
+          let hasEntries = game.frames.some(f => (f.b1 || '').trim() !== '');
+          if (!hasEntries) continue;
+
+          totalGames++;
+          totalPinfall += gameScore;
+
+          game.frames.forEach((f, idx) => {
+            const b1 = (f.b1 || '').trim().toUpperCase();
+            const b2 = (f.b2 || '').trim().toUpperCase();
+
+            if (!b1 && !b2) return; // Skip unfilled frames
+            totalFrames++;
+
+            // Strike checking
+            if (b1 === 'X' || b1 === '10') {
+              totalStrikes++;
+              totalFirstBallPins += 10;
+              totalFirstBallShots++;
+            } else {
+              // Non-strike first ball
+              const b1Pins = parseInt(b1) || 0;
+              totalFirstBallPins += b1Pins;
+              totalFirstBallShots++;
+
+              // Spare opportunity
+              spareOpportunities++;
+              if (b2 === '/') {
+                spareConversions++;
+              } else {
+                openFramesCount++;
+              }
+            }
+          });
+        }
+      });
+
+      const scoringAvg = totalGames > 0 ? (totalPinfall / totalGames).toFixed(1) : '0.0';
+      const firstBallAvg = totalFirstBallShots > 0 ? (totalFirstBallPins / totalFirstBallShots).toFixed(2) : '0.00';
+      const sparePct = spareOpportunities > 0 ? ((spareConversions / spareOpportunities) * 100).toFixed(1) : '0.0';
+      const openPct = totalFrames > 0 ? ((openFramesCount / totalFrames) * 100).toFixed(1) : '0.0';
+      const strikePct = totalFirstBallShots > 0 ? ((totalStrikes / totalFirstBallShots) * 100).toFixed(1) : '0.0';
+
+      document.getElementById('stat-scoring-avg').innerText = scoringAvg;
+      document.getElementById('stat-first-ball-avg').innerText = firstBallAvg;
+      document.getElementById('stat-spare-pct').innerText = `${sparePct}%`;
+      document.getElementById('stat-open-pct').innerText = `${openPct}%`;
+      document.getElementById('stat-games-count').innerText = `${totalGames} games logged`;
+      document.getElementById('stat-spare-count').innerText = `${spareConversions} / ${spareOpportunities} converted`;
+      document.getElementById('stat-open-count').innerText = `${openFramesCount} open frames`;
+      document.getElementById('stat-total-pinfall').innerText = totalPinfall;
+      document.getElementById('stat-strikes-count').innerText = totalStrikes;
+      document.getElementById('stat-strike-pct').innerText = `${strikePct}%`;
+      document.getElementById('stat-high-game').innerText = highGame;
     }
 
     function clearSession() {
-      if (confirm('Are you sure you want to clear all data for this session?')) {
+      if (confirm('Are you sure you want to clear the current active editor log?')) {
         localStorage.removeItem('bowling_active_session');
+        activeSessionId = null;
         document.getElementById('session-center').value = '';
         document.getElementById('session-notes').value = '';
+        document.getElementById('session-editing-id').classList.add('hidden');
         initGamesData();
         selectGameTab(1);
       }
@@ -421,6 +726,54 @@
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', `bowling_session_${date}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportAllToCSV() {
+      const history = JSON.parse(localStorage.getItem('bowling_sessions_history') || '[]');
+      if (history.length === 0) {
+        alert('No saved sessions to export.');
+        return;
+      }
+
+      let csvRows = [];
+      csvRows.push(['Session Date', 'Center/Pattern', 'Game', 'Ball Used', 'Game Total', 'Frame', 'Target Line', 'Ball 1', 'Ball 2', 'Ball 3', 'Frame Comment']);
+
+      history.forEach(session => {
+        const date = session.date || '';
+        const center = session.center || '';
+        if (!session.gamesData) return;
+
+        for (let g = 1; g <= 5; g++) {
+          const game = session.gamesData[g];
+          if (!game) continue;
+
+          game.frames.forEach((f, idx) => {
+            csvRows.push([
+              `"${date}"`,
+              `"${center}"`,
+              g,
+              `"${game.ball || ''}"`,
+              game.totalScore || 0,
+              idx + 1,
+              `"${f.line || ''}"`,
+              `"${f.b1 || ''}"`,
+              `"${f.b2 || ''}"`,
+              `"${f.b3 || ''}"`,
+              `"${(f.note || '').replace(/"/g, '""')}"`
+            ]);
+          });
+        }
+      });
+
+      const csvContent = csvRows.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `all_bowling_history_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
