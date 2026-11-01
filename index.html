@@ -43,6 +43,7 @@
     .btn-secondary { background-color: var(--border-color); color: var(--text-main); }
     .btn-danger { background-color: var(--danger-color); color: #fff; }
     .btn-success { background-color: var(--success-color); color: #fff; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
     .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 
     .top-nav { display: flex; gap: 4px; margin-bottom: 14px; background-color: var(--card-bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -81,15 +82,37 @@
     .frame-inputs { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 6px; margin-bottom: 4px; }
     .frame-inputs.f10 { grid-template-columns: 1fr 1fr 1fr 1.1fr; }
 
+    .frame-extra { display: flex; gap: 8px; align-items: center; }
+    .frame-extra input { flex: 1; min-width: 0; font-size: 0.75rem; padding: 4px 6px; }
+    .leave-rack { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+    .leave-rack div { display: flex; justify-content: center; gap: 3px; }
+    .pin { width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--text-muted); background: transparent; padding: 0; cursor: pointer; }
+    .pin.up { background: #fff; border-color: #fff; }
+    .pocket-chip { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 12px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; }
+    .pocket-chip.hit { border-color: var(--success-color); color: var(--success-color); }
+    .pocket-chip.miss { border-color: var(--danger-color); color: var(--danger-color); }
+    .badge-split { color: var(--danger-color); margin-left: 6px; font-size: 0.65rem; }
+    .game-ball { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .game-ball label { margin: 0; white-space: nowrap; }
+
+    .stats-heading { font-size: 0.75rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 8px; }
+    .stats-scope, .stats-note { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-card .sub { font-size: 0.65rem; color: var(--text-muted); line-height: 1.3; }
     .stat-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: center; }
     .stat-card .num { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 4px 0; }
     .stat-card .desc { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
 
-    .traj-readouts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
-    .traj-readouts div { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 4px; text-align: center; }
+    .traj-section { font-size: 0.75rem; font-weight: 700; color: var(--accent-color); margin: 6px 0 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .traj-readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+    .traj-readouts > div { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 4px; text-align: center; }
     .traj-readouts .lbl { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
     .traj-readouts .val { font-size: 0.9rem; font-weight: 700; color: var(--accent-color); }
+    .ball-spec { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+    .traj-advice { font-size: 0.75rem; color: var(--text-main); background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-top: 8px; line-height: 1.4; }
+    .traj-advice b { color: var(--accent-color); }
+    .traj-legend { display: flex; gap: 12px; justify-content: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 10px; }
+    .traj-legend i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 
     .history-item { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     .history-info h4 { font-size: 0.85rem; color: var(--text-main); }
@@ -177,83 +200,191 @@
     <!-- TRAJECTORY STUDIO VIEW -->
     <div id="view-traj" class="view-panel">
       <div class="card">
-        <div class="card-title">Pro-Dynamic Bowling Trajectory Studio</div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Right-handed view from the approach (board 1 on the right). Lane length is compressed to fit the screen; widths, pins and ball are to scale.</p>
+        <div class="card-title">Trajectory Studio</div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Right-handed, viewed from the approach (board 1 on the right). Enter where the ball crosses the foul line and the arrows; the path past the arrows is simulated from your release and the lane.</p>
 
-        <div style="margin-bottom: 10px;">
-          <label>Tactical Presets (laydown · arrow · breakpoint)</label>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(25, 10, 13, 7, 40, 17.5)">Standard (25-10-7)</button>
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(20, 15, 14, 10, 40, 17.5)">Inside (20-15-10)</button>
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 8, 13, 4, 42, 17.5)">Deep (30-8-4)</button>
+        <div class="traj-section">Your Line</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Board at Foul Line</label>
+            <input type="number" id="tr-laydown" value="25" min="1" max="39" step="0.5" oninput="onTrajInput()" />
+          </div>
+          <div class="form-group">
+            <label>Board at Arrows</label>
+            <input type="number" id="tr-arrow" value="15" min="1" max="39" step="0.5" oninput="onTrajInput()" />
           </div>
         </div>
 
+        <div class="traj-section">Your Release</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="setRelease(16.5, 410, 45, 10)">My Profile</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRelease(15.5, 275, 30, 15)">Stroker</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRelease(17, 350, 45, 12)">Tweener</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRelease(18, 475, 55, 8)">Cranker</button>
+        </div>
+        <div class="grid-4">
+          <div class="form-group">
+            <label>Speed (mph)</label>
+            <input type="number" id="tr-speed" value="16.5" min="10" max="24" step="0.5" oninput="onTrajInput()" />
+          </div>
+          <div class="form-group">
+            <label>Rev Rate (rpm)</label>
+            <input type="number" id="tr-rpm" value="410" min="100" max="650" step="10" oninput="onTrajInput()" />
+          </div>
+          <div class="form-group">
+            <label>Axis Rot. (°)</label>
+            <input type="number" id="tr-rot" value="45" min="0" max="90" step="5" oninput="onTrajInput()" />
+          </div>
+          <div class="form-group">
+            <label>Axis Tilt (°)</label>
+            <input type="number" id="tr-tilt" value="10" min="0" max="45" step="1" oninput="onTrajInput()" />
+          </div>
+        </div>
+
+        <div class="traj-section">Lane &amp; Ball</div>
+        <div class="form-group">
+          <label>Ball</label>
+          <select id="tr-ball" onchange="onTrajInput()">
+            <option value="viking">900 Global Viking Conquest</option>
+            <option value="zen">900 Global Zen Soul</option>
+            <option value="lock">Storm Lock</option>
+            <option value="tzone">Brunswick TZone (spare)</option>
+          </select>
+          <div class="ball-spec" id="tr-ball-spec"></div>
+        </div>
         <div class="grid-3">
           <div class="form-group">
-            <label>Laydown Board</label>
-            <input type="number" id="tr-laydown" value="25" min="1" max="39" step="0.5" oninput="drawLane()" />
+            <label>Oil Pattern</label>
+            <select id="tr-pattern" onchange="onTrajInput()">
+              <option value="house">House</option>
+              <option value="sport">Sport (flat)</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Arrow Board</label>
-            <input type="number" id="tr-arrow" value="10" min="1" max="39" step="0.5" oninput="drawLane()" />
+            <label>Length (ft)</label>
+            <input type="number" id="tr-oil" value="40" min="30" max="50" step="1" oninput="onTrajInput()" />
           </div>
           <div class="form-group">
-            <label>Arrow Dist (ft)</label>
-            <input type="number" id="tr-dist" value="13" min="10" max="20" step="1" oninput="drawLane()" />
+            <label>Surface</label>
+            <select id="tr-surface" onchange="onTrajInput()">
+              <option value="factory" selected>Factory</option>
+              <option value="polished">Polished</option>
+              <option value="sanded">Sanded / Dull</option>
+            </select>
           </div>
-          <div class="form-group">
-            <label>Breakpoint Board</label>
-            <input type="number" id="tr-bp-board" value="7" min="1" max="39" step="0.5" oninput="drawLane()" />
-          </div>
-          <div class="form-group">
-            <label>Breakpoint Dist (ft)</label>
-            <input type="number" id="tr-bp-dist" value="40" min="25" max="55" step="1" oninput="drawLane()" />
-          </div>
-          <div class="form-group">
-            <label>Pocket Board</label>
-            <input type="number" id="tr-pocket" value="17.5" min="1" max="39" step="0.5" oninput="drawLane()" />
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 4px;">
-          <label style="display: flex; justify-content: space-between;"><span>Back-End Shape</span><span>Arc ◂ ▸ Skid / Flip</span></label>
-          <input type="range" id="tr-sharp" min="0" max="1" step="0.05" value="0.4" oninput="drawLane()" />
         </div>
 
         <div class="traj-readouts">
-          <div><div class="lbl">Launch</div><div class="val" id="tr-out-launch">-</div></div>
           <div><div class="lbl">Breakpoint</div><div class="val" id="tr-out-bp">-</div></div>
-          <div><div class="lbl">Hook</div><div class="val" id="tr-out-hook">-</div></div>
+          <div><div class="lbl">Board at Pins</div><div class="val" id="tr-out-pins">-</div></div>
           <div><div class="lbl">Entry Angle</div><div class="val" id="tr-out-entry">-</div></div>
+          <div><div class="lbl">Roll Point</div><div class="val" id="tr-out-roll">-</div></div>
+          <div><div class="lbl">Speed at Pins</div><div class="val" id="tr-out-speed">-</div></div>
+          <div><div class="lbl">Result</div><div class="val" id="tr-out-result">-</div></div>
+        </div>
+        <div class="traj-advice" id="tr-advice"></div>
+        <button class="btn btn-success" id="tr-recommend" style="width: 100%; margin-top: 8px;" onclick="applyRecommendedLine()">Apply Recommended Line</button>
+
+        <div class="traj-legend">
+          <span><i style="background:#38bdf8"></i>Skid</span>
+          <span><i style="background:#f59e0b"></i>Hook</span>
+          <span><i style="background:#22c55e"></i>Roll</span>
+          <span><i style="background:rgba(56,189,248,0.35)"></i>Oil</span>
         </div>
 
         <div class="canvas-container">
           <canvas id="laneCanvas"></canvas>
         </div>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 6px;">Model: a sliding ball on low-friction oil and higher-friction dry boards. Lane length is compressed about 5× so the whole lane fits; widths are to scale. Treat results as a guide to how changes move the ball, not exact predictions.</p>
       </div>
     </div>
 
     <!-- ANALYTICS VIEW -->
     <div id="view-stats" class="view-panel">
+      <p class="stats-scope" id="st-scope"></p>
+      <div class="stats-heading">Scoring</div>
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="desc">Scoring Average</div>
-          <div class="num" id="st-avg">0.0</div>
+          <div class="desc">Average</div>
+          <div class="num" id="st-avg">-</div>
+          <div class="sub" id="st-avg-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">High Game</div>
+          <div class="num" id="st-high">-</div>
+          <div class="sub" id="st-high-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">High Series</div>
+          <div class="num" id="st-series">-</div>
+          <div class="sub" id="st-series-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Clean Games</div>
+          <div class="num" id="st-clean">-</div>
+          <div class="sub" id="st-clean-sub">Games with no open frames</div>
+        </div>
+      </div>
+      <div class="stats-heading">Strikes &amp; First Ball</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="desc">Strike %</div>
+          <div class="num" id="st-strike">-</div>
+          <div class="sub" id="st-strike-sub"></div>
         </div>
         <div class="stat-card">
           <div class="desc">First Ball Average</div>
-          <div class="num" id="st-fba">0.0</div>
+          <div class="num" id="st-fba">-</div>
+          <div class="sub" id="st-fba-sub">Pins per first ball</div>
         </div>
         <div class="stat-card">
-          <div class="desc">Spare Conversion %</div>
-          <div class="num" id="st-spare">0%</div>
+          <div class="desc">Pocket Hit %</div>
+          <div class="num" id="st-pocket">-</div>
+          <div class="sub" id="st-pocket-sub"></div>
         </div>
         <div class="stat-card">
-          <div class="desc">Open Frames</div>
-          <div class="num" id="st-opens">0 (0%)</div>
+          <div class="desc">Carry %</div>
+          <div class="num" id="st-carry">-</div>
+          <div class="sub" id="st-carry-sub"></div>
         </div>
       </div>
+      <div class="stats-heading">Spares</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="desc">Spare Conversion</div>
+          <div class="num" id="st-spare">-</div>
+          <div class="sub" id="st-spare-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Single-Pin Spares</div>
+          <div class="num" id="st-single">-</div>
+          <div class="sub" id="st-single-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Multi-Pin Spares</div>
+          <div class="num" id="st-multi">-</div>
+          <div class="sub" id="st-multi-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Split Conversion</div>
+          <div class="num" id="st-split">-</div>
+          <div class="sub" id="st-split-sub"></div>
+        </div>
+      </div>
+      <div class="stats-heading">Open Frames &amp; Entry Angle</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="desc">Open Frames</div>
+          <div class="num" id="st-opens">-</div>
+          <div class="sub" id="st-opens-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="desc">Est. Entry Angle</div>
+          <div class="num" id="st-entry">-</div>
+          <div class="sub" id="st-entry-sub"></div>
+        </div>
+      </div>
+      <p class="stats-note">Pocket, carry and split stats come from the optional <b>Pocket?</b> button and pin leave on each frame. Entry angle is estimated with the Trajectory model from each frame's Line (foul line – arrows, e.g. 25-15), the ball used that game, and the release and lane settings on the Trajectory tab.</p>
     </div>
 
     <!-- HISTORY VIEW -->
@@ -299,13 +430,14 @@
     }
 
     function blankFrame() {
-      return { b1: '', b2: '', b3: '', line: '', note: '' };
+      // leave = pins standing after the first ball (optional); pocket = first ball hit the pocket (true/false/null)
+      return { b1: '', b2: '', b3: '', line: '', note: '', leave: [], pocket: null };
     }
 
     function newSession() {
       const s = { v: DATA_VERSION, id: Date.now(), date: todayLocal(), center: '', notes: '', games: {} };
       for (let g = 1; g <= GAME_COUNT; g++) {
-        s.games[g] = { frames: {} };
+        s.games[g] = { ball: 'viking', frames: {} };
         for (let f = 1; f <= 10; f++) s.games[g].frames[f] = blankFrame();
       }
       return s;
@@ -319,6 +451,7 @@
       s.games = s.games || {};
       for (let g = 1; g <= GAME_COUNT; g++) {
         s.games[g] = s.games[g] || { frames: {} };
+        if (!BALLS[s.games[g].ball]) s.games[g].ball = 'viking';
         const frames = s.games[g].frames = s.games[g].frames || {};
         for (let f = 1; f <= 10; f++) {
           const fr = Object.assign(blankFrame(), frames[f] || {});
@@ -326,6 +459,8 @@
             if (fr[k] == null) fr[k] = '';
             if (fr[k] === '10') fr[k] = 'X';
           });
+          fr.leave = Array.isArray(fr.leave) ? fr.leave.filter(n => Number.isInteger(n) && n >= 1 && n <= 10) : [];
+          fr.pocket = typeof fr.pocket === 'boolean' ? fr.pocket : null;
           if (legacy && ['b1', 'b2', 'b3'].every(k => fr[k] === '' || fr[k] === '-')) {
             fr.b1 = fr.b2 = fr.b3 = '';
           }
@@ -475,12 +610,14 @@
       return null;
     }
 
-    // Clears any ball that is no longer legal (e.g. after changing an earlier ball).
+    // Clears any ball that is no longer legal (e.g. after changing an earlier ball),
+    // and a pin leave that no longer matches the first ball's count.
     function sanitizeFrame(fr, f) {
       ['b1', 'b2', 'b3'].forEach(k => {
         const legal = legalBalls(fr, f, k);
         if (!legal || (fr[k] !== '' && !legal.includes(fr[k]))) fr[k] = '';
       });
+      if (fr.leave && fr.leave.length && (fr.b1 === '' || ballPins(fr.b1, 0) !== 10 - fr.leave.length)) fr.leave = [];
     }
 
     // ---------- Navigation ----------
@@ -516,6 +653,7 @@
     function init() {
       loadCurrentSession();
       fillSessionFields();
+      loadTrajInputs();
       renderGames();
       window.switchGame(1);
       calcAnalytics();
@@ -548,24 +686,67 @@
           framesHTML += `
             <div class="frame-card">
               <div class="frame-header">
-                <span>FRAME ${f}</span>
+                <span>FRAME ${f}${isSplit(fr.leave) ? '<span class="badge-split">SPLIT</span>' : ''}</span>
                 <span id="score-g${g}-f${f}">-</span>
               </div>
               <div class="frame-inputs ${is10 ? 'f10' : ''}">
                 ${ballSelect(g, f, 'b1', fr)}
                 ${ballSelect(g, f, 'b2', fr)}
                 ${is10 ? ballSelect(g, f, 'b3', fr) : ''}
-                <input type="text" placeholder="Line (28-10)" value="${escapeHtml(fr.line)}" onchange="updateShot(${g}, ${f}, 'line', this.value)" />
+                <input type="text" placeholder="Line 25-15" title="Board at the foul line - board at the arrows" value="${escapeHtml(fr.line)}" onchange="updateShot(${g}, ${f}, 'line', this.value)" />
               </div>
-              <input type="text" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Frame note / comment..." value="${escapeHtml(fr.note)}" onchange="updateShot(${g}, ${f}, 'note', this.value)" />
+              <div class="frame-extra">
+                ${leaveRack(g, f, fr)}
+                <button type="button" class="pocket-chip${fr.pocket === true ? ' hit' : fr.pocket === false ? ' miss' : ''}" onclick="togglePocket(${g}, ${f})">${fr.pocket === true ? 'Pocket' : fr.pocket === false ? 'Missed' : 'Pocket?'}</button>
+                <input type="text" placeholder="Frame note / comment..." value="${escapeHtml(fr.note)}" onchange="updateShot(${g}, ${f}, 'note', this.value)" />
+              </div>
             </div>
           `;
         }
-        gameDiv.innerHTML = `<div class="frames-container">${framesHTML}</div>`;
+        const ballOptions = Object.entries(BALLS).map(([key, b]) =>
+          `<option value="${key}"${sessionData.games[g].ball === key ? ' selected' : ''}>${b.name}</option>`).join('');
+        gameDiv.innerHTML = `
+          <div class="game-ball">
+            <label>Ball</label>
+            <select onchange="setGameBall(${g}, this.value)">${ballOptions}</select>
+          </div>
+          <div class="frames-container">${framesHTML}</div>`;
         container.appendChild(gameDiv);
       }
       recalcScores();
     }
+
+    // Pins drawn from the bowler's view: back row first, 7 on the left.
+    function leaveRack(g, f, fr) {
+      const rows = [[7, 8, 9, 10], [4, 5, 6], [2, 3], [1]];
+      return `<div class="leave-rack" title="Tap the pins left standing after the first ball">${rows.map(row =>
+        `<div>${row.map(id => {
+          const up = fr.leave.includes(id);
+          return `<button type="button" class="pin${up ? ' up' : ''}" aria-label="Pin ${id}" aria-pressed="${up}" onclick="togglePin(${g}, ${f}, ${id})"></button>`;
+        }).join('')}</div>`).join('')}</div>`;
+    }
+
+    // Marking the leave also sets the first ball's count.
+    window.togglePin = function(g, f, pin) {
+      const fr = sessionData.games[g].frames[f];
+      fr.leave = fr.leave.includes(pin) ? fr.leave.filter(p => p !== pin) : [...fr.leave, pin].sort((a, b) => a - b);
+      if (fr.leave.length) fr.b1 = fr.leave.length === 10 ? '-' : String(10 - fr.leave.length);
+      sanitizeFrame(fr, f);
+      renderGames();
+      autoSave();
+    };
+
+    window.togglePocket = function(g, f) {
+      const fr = sessionData.games[g].frames[f];
+      fr.pocket = fr.pocket === null ? true : fr.pocket === true ? false : null;
+      renderGames();
+      autoSave();
+    };
+
+    window.setGameBall = function(g, ball) {
+      sessionData.games[g].ball = ball;
+      autoSave();
+    };
 
     window.updateShot = function(g, f, key, val) {
       const fr = sessionData.games[g].frames[f];
@@ -599,6 +780,9 @@
     }
 
     // ---------- Trajectory studio ----------
+    // The ball is simulated as a sliding sphere. While the contact patch slips, friction
+    // (low on oil, higher on dry boards) slows the skid and turns side rotation into
+    // lateral motion; once slip reaches zero the ball is rolling and travels straight.
     const LANE = {
       gutterIn: 9.25,
       widthIn: 41.5,
@@ -610,6 +794,7 @@
     const BALL_R_IN = 4.25;
     const PIN_R_IN = 2.383;
     const ROW_IN = 10.392;     // 12" triangle spacing
+    const POCKET_BOARD = 17.5;
     // dx = inches from the lane centre, positive = right (toward board 1)
     const PINS = [
       { id: 1, dx: 0, row: 0 },
@@ -617,12 +802,37 @@
       { id: 4, dx: -12, row: 2 }, { id: 5, dx: 0, row: 2 }, { id: 6, dx: 12, row: 2 },
       { id: 7, dx: -18, row: 3 }, { id: 8, dx: -6, row: 3 }, { id: 9, dx: 6, row: 3 }, { id: 10, dx: 18, row: 3 }
     ];
-    const ARROWS = [
-      { b: 5, y: 144 }, { b: 10, y: 156 }, { b: 15, y: 168 }, { b: 20, y: 180 },
-      { b: 25, y: 168 }, { b: 30, y: 156 }, { b: 35, y: 144 }
-    ];
+    const ARROW_BOARDS = [5, 10, 15, 20, 25, 30, 35];
     const DOT_BOARDS = [3, 5, 8, 11, 14, 26, 29, 32, 35, 37];
     const DOT_Y = 84;
+
+    const PHYS = {
+      R: 0.108,                // ball radius (m)
+      G: 9.81,
+      BW: LANE.boardIn * 0.0254,
+      FT: 0.3048,
+      IN: 0.0254,
+      MU_OIL_FRONT: 0.015,     // heavier oil near the foul line
+      MU_OIL_BACK: 0.08,       // lighter, buffed oil toward the end of the pattern
+      MU_DRY: 0.15,
+      DT: 0.001
+    };
+    // Factory specs (15 lb). oil / dry scale lane friction for the coverstock and finish:
+    // solid and sanded covers grip the oil sooner, polyester barely grips at all.
+    const BALLS = {
+      viking: { name: '900 Global Viking Conquest', rg: 2.51, diff: 0.052, mb: 0.016, cover: 'RB 94 Solid Reactive', finish: '2000 Abralon', oil: 1.25, dry: 1.1 },
+      zen: { name: '900 Global Zen Soul', rg: 2.49, diff: 0.051, mb: 0, cover: 'S77 Response Hybrid Reactive', finish: '4000 Abralon', oil: 1.0, dry: 1.0 },
+      lock: { name: 'Storm Lock', rg: 2.48, diff: 0.054, mb: 0.018, cover: 'GI-15 Hybrid Reactive', finish: '3000 Abralon', oil: 1.15, dry: 1.05 },
+      tzone: { name: 'Brunswick TZone', rg: 2.70, diff: 0.019, mb: 0, cover: 'Polyester', finish: 'High gloss', oil: 0.6, dry: 0.45 }
+    };
+    // Relative to the factory finish.
+    const SURFACE = { factory: 1, polished: 0.85, sanded: 1.15 };
+    const TRAJ_INPUTS = ['tr-laydown', 'tr-arrow', 'tr-speed', 'tr-rpm', 'tr-rot', 'tr-tilt', 'tr-ball', 'tr-pattern', 'tr-oil', 'tr-surface'];
+
+    // Arrows run from 12 ft (boards 5 and 35) to 15 ft (board 20).
+    function arrowDistIn(board) {
+      return (15 - 3 * Math.min(Math.abs(board - 20), 15) / 15) * 12;
+    }
 
     // Lateral offset from lane centre (inches) of a board, right-handed numbering.
     function boardToCentreIn(b) {
@@ -634,60 +844,225 @@
       return Number.isFinite(v) ? v : fallback;
     }
 
-    // Ball path as {y (inches from foul line), b (board)} points:
-    // straight skid from laydown through the target arrow, a curve that tapers to the
-    // breakpoint (no lateral motion), then the hook from breakpoint into the pocket.
-    function computePath(p) {
-      const L = p.laydown, A = p.arrow, B = p.bpBoard, P = p.pocket;
-      const t = p.arrowDistFt * 12;
-      const bp = Math.min(Math.max(p.bpDistFt * 12, t + 24), LANE.headPinIn - 60);
-      const expo = 1.6 + 2.4 * p.sharp;   // 1.6 = round arc, 4 = late skid/flip
-      const backAt = y => B + (P - B) * Math.pow((y - bp) / (LANE.headPinIn - bp), expo);
-
-      const dxPocket = Math.abs(boardToCentreIn(P));
-      const reach = BALL_R_IN + PIN_R_IN;
-      const contactY = LANE.headPinIn - (dxPocket < reach ? Math.sqrt(reach * reach - dxPocket * dxPocket) : 0);
-
-      const pts = [];
-      for (let i = 0; i <= 30; i++) {
-        const y = t * i / 30;
-        pts.push({ y, b: L + (A - L) * (y / t) });
-      }
-      // Quadratic Bezier whose start follows the skid line and whose end is flat at the breakpoint.
-      const slope = (A - L) / t;
-      let yc = slope !== 0 ? t + (B - A) / slope : (t + bp) / 2;
-      if (!(yc >= t && yc <= bp)) yc = (t + bp) / 2;
-      for (let i = 1; i <= 40; i++) {
-        const u = i / 40;
-        pts.push({
-          y: (1 - u) * (1 - u) * t + 2 * (1 - u) * u * yc + u * u * bp,
-          b: (1 - u) * (1 - u) * A + (2 * (1 - u) * u + u * u) * B
-        });
-      }
-      for (let i = 1; i <= 60; i++) {
-        const y = bp + (contactY - bp) * i / 60;
-        pts.push({ y, b: backAt(y) });
-      }
-
-      const entrySlope = (P - B) * expo / (LANE.headPinIn - bp) * LANE.boardIn;
+    function readTrajParams() {
       return {
-        pts,
-        bp: { y: bp, b: B },
-        contact: pts[pts.length - 1],
-        launchDeg: Math.atan(Math.abs(A - L) * LANE.boardIn / t) * 180 / Math.PI,
-        entryDeg: Math.atan(Math.abs(entrySlope)) * 180 / Math.PI,
-        hookBoards: Math.abs(P - B)
+        laydown: readNum('tr-laydown', 25),
+        arrow: readNum('tr-arrow', 15),
+        speed: Math.max(readNum('tr-speed', 16.5), 5),
+        rpm: Math.max(readNum('tr-rpm', 410), 0),
+        rotation: readNum('tr-rot', 45),
+        tilt: readNum('tr-tilt', 10),
+        pattern: document.getElementById('tr-pattern').value,
+        oilFt: readNum('tr-oil', 40),
+        ...ballFriction()
       };
     }
 
-    window.setPreset = function(lay, arr, dist, bpBoard, bpDist, pkt) {
-      document.getElementById('tr-laydown').value = lay;
-      document.getElementById('tr-arrow').value = arr;
-      document.getElementById('tr-dist').value = dist;
-      document.getElementById('tr-bp-board').value = bpBoard;
-      document.getElementById('tr-bp-dist').value = bpDist;
-      document.getElementById('tr-pocket').value = pkt;
+    // Lower RG revs up sooner; higher differential flares more fresh cover into the track,
+    // which strengthens the hook once the ball reaches the dry.
+    function ballFriction(ballKey = document.getElementById('tr-ball').value) {
+      const ball = BALLS[ballKey] || BALLS.viking;
+      const surface = SURFACE[document.getElementById('tr-surface').value] || 1;
+      const flare = 1 + (ball.diff - 0.035) * 4;
+      return {
+        ball,
+        k2: (ball.rg * 0.0254) ** 2,
+        oilMult: ball.oil * surface,
+        dryMult: ball.dry * flare * surface
+      };
+    }
+
+    // Friction coefficient at a point (x = metres from the right edge, y = metres past the foul line).
+    // House patterns carry less oil outside, so the outer boards hold (hook) more.
+    function frictionAt(x, y, p) {
+      const dry = PHYS.MU_DRY * p.dryMult;
+      const yFt = y / PHYS.FT;
+      if (yFt >= p.oilFt) return dry;
+      const oil = (PHYS.MU_OIL_FRONT + (PHYS.MU_OIL_BACK - PHYS.MU_OIL_FRONT) * Math.min(yFt / p.oilFt, 1)) * p.oilMult;
+      let mu = yFt < p.oilFt - 3 ? oil : oil + (dry - oil) * (yFt - (p.oilFt - 3)) / 3;
+      if (p.pattern === 'house') {
+        const board = x / PHYS.BW + 0.5;
+        const outside = Math.min(Math.max((10 - Math.min(board, 40 - board)) / 5, 0), 1);
+        const outsideMu = dry * 0.35;
+        if (outsideMu > mu) mu += (outsideMu - mu) * outside;
+      }
+      return mu;
+    }
+
+    // Rolls the ball from the foul line at launch angle alpha (radians, + = toward higher boards)
+    // until it reaches stopIn inches down the lane or drops into a gutter.
+    function simulateBall(p, alpha, stopIn) {
+      const { R, G, BW, IN, DT } = PHYS;
+      const K2 = p.k2;
+      const v0 = p.speed * 0.44704;
+      const w0 = p.rpm * Math.PI / 30;
+      const tilt = p.tilt * Math.PI / 180;
+      const rot = p.rotation * Math.PI / 180;
+      // Spin axis in the ball's own frame: forward-roll part, side-roll part, tilt (spin) part.
+      const wSide = -w0 * Math.cos(tilt) * Math.cos(rot);
+      const wFwd = w0 * Math.cos(tilt) * Math.sin(rot);
+      const fx = Math.sin(alpha), fy = Math.cos(alpha);
+      const lx = Math.cos(alpha), ly = -Math.sin(alpha);
+      let wx = wSide * lx + wFwd * fx;
+      let wy = wSide * ly + wFwd * fy;
+      let vx = v0 * fx, vy = v0 * fy;
+      let x = (p.laydown - 0.5) * BW, y = 0;
+      const stopM = stopIn * IN;
+      const laneM = LANE.widthIn * IN;
+      const pts = [{ yIn: 0, b: p.laydown }];
+      let rollIn = null, gutterIn = null, step = 0;
+
+      while (y < stopM && vy > 0) {
+        if (rollIn === null) {
+          const ux = vx - R * wy, uy = vy + R * wx;
+          const slip = Math.hypot(ux, uy);
+          if (slip < 0.01) {
+            rollIn = y / IN;
+          } else {
+            const a = frictionAt(x, y, p) * G;
+            const ax = -a * ux / slip, ay = -a * uy / slip;
+            vx += ax * DT; vy += ay * DT;
+            wx += R * ay / K2 * DT;
+            wy -= R * ax / K2 * DT;
+          }
+        }
+        x += vx * DT;
+        y += vy * DT;
+        if (x < 0 || x > laneM) { gutterIn = y / IN; break; }
+        if (++step % 4 === 0) pts.push({ yIn: y / IN, b: x / BW + 0.5 });
+      }
+      pts.push({ yIn: y / IN, b: x / BW + 0.5 });
+      return { pts, rollIn, gutterIn, endBoard: x / BW + 0.5, vx, vy };
+    }
+
+    // Launch angle that makes the ball actually cross the chosen board at the arrows.
+    function solveLaunch(p) {
+      const dist = arrowDistIn(p.arrow);
+      let lo = -0.4, hi = 0.4;
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        if (simulateBall(p, mid, dist).endBoard < p.arrow) lo = mid; else hi = mid;
+      }
+      return (lo + hi) / 2;
+    }
+
+    function runShot(p) {
+      const alpha = solveLaunch(p);
+      const sim = simulateBall(p, alpha, LANE.headPinIn);
+      let bp = sim.pts[0];
+      sim.pts.forEach(pt => { if (pt.b < bp.b) bp = pt; });
+      return {
+        ...sim,
+        alpha,
+        // No breakpoint if the ball never turns back (still drifting out at the end).
+        breakpoint: bp.yIn > 1 && bp.yIn < sim.pts[sim.pts.length - 1].yIn - 12 ? bp : null,
+        entryDeg: Math.atan2(sim.vx, sim.vy) * 180 / Math.PI,
+        speedAtPins: Math.hypot(sim.vx, sim.vy) / 0.44704
+      };
+    }
+
+    function shotResult(shot) {
+      if (shot.gutterIn !== null) return 'Gutter';
+      const b = shot.endBoard;
+      if (b >= 16.5 && b <= 18.5) return 'Pocket';
+      if (b > 18.5 && b <= 21) return 'High';
+      if (b > 21 && b <= 24) return 'Brooklyn';
+      if (b > 24) return 'Way left';
+      if (b >= 13.5) return 'Light';
+      return 'Way right';
+    }
+
+    // Finds the value (in half boards) nearest `current` whose shot finishes in the pocket.
+    // Scans the whole range so gutter balls never count as a solution, then refines each crossing.
+    function solveForPocket(lo, hi, current, makeParams) {
+      const shotAt = v => runShot(makeParams(v));
+      const miss = shot => shot.endBoard - POCKET_BOARD;
+      let best = null, prev = null;
+      for (let v = lo; v <= hi; v += 1) {
+        const shot = shotAt(v);
+        const cur = shot.gutterIn === null ? { v, m: miss(shot) } : null;
+        if (prev && cur && (prev.m < 0) !== (cur.m < 0)) {
+          let a = prev.v, b = cur.v, fa = prev.m;
+          for (let i = 0; i < 8; i++) {
+            const mid = (a + b) / 2, sm = shotAt(mid);
+            if (sm.gutterIn !== null) break;
+            if ((miss(sm) < 0) === (fa < 0)) { a = mid; fa = miss(sm); } else { b = mid; }
+          }
+          const root = (a + b) / 2;
+          [Math.round(root * 2) / 2, Math.floor(root * 2) / 2, Math.ceil(root * 2) / 2].forEach(c => {
+            if (c < lo || c > hi) return;
+            const sc = shotAt(c);
+            if (shotResult(sc) !== 'Pocket') return;
+            const score = Math.abs(c - current) + Math.abs(miss(sc)) * 0.01;
+            if (!best || score < best.score) best = { v: c, score };
+          });
+        }
+        prev = cur;
+      }
+      return best ? best.v : null;
+    }
+
+    let recommendedLine = null;
+
+    // Lists the eyes-only, feet-only and 2-and-1 moves that reach the pocket, and keeps the
+    // smallest as the recommended line.
+    function pocketAdvice(p, result) {
+      recommendedLine = null;
+      if (result === 'Pocket') return 'On target: this line carries into the pocket.';
+      const side = n => `${Math.abs(n)} board${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'left' : 'right'}`;
+      const options = [];
+      const arrow = solveForPocket(1, 39, p.arrow, v => ({ ...p, arrow: v }));
+      if (arrow !== null && arrow !== p.arrow) {
+        options.push({ laydown: p.laydown, arrow, move: Math.abs(arrow - p.arrow),
+          text: `same laydown, target <b>${arrow}</b> at the arrows (eyes ${side(arrow - p.arrow)})` });
+      }
+      const laydown = solveForPocket(1, 39, p.laydown, v => ({ ...p, laydown: v }));
+      if (laydown !== null && laydown !== p.laydown) {
+        options.push({ laydown, arrow: p.arrow, move: Math.abs(laydown - p.laydown),
+          text: `same target, lay the ball down on <b>${laydown}</b> (feet ${side(laydown - p.laydown)})` });
+      }
+      // 2-and-1 move: feet two boards for every board the eyes move, same direction.
+      const dLo = Math.max((1 - p.laydown) / 2, 1 - p.arrow), dHi = Math.min((39 - p.laydown) / 2, 39 - p.arrow);
+      const d = solveForPocket(Math.ceil(dLo * 2) / 2, Math.floor(dHi * 2) / 2, 0, v => ({ ...p, laydown: p.laydown + 2 * v, arrow: p.arrow + v }));
+      if (d !== null && d !== 0) {
+        options.push({ laydown: p.laydown + 2 * d, arrow: p.arrow + d, move: Math.abs(2 * d) + 0.5,
+          text: `2-and-1 move: feet ${side(2 * d)}, eyes ${side(d)} (laydown <b>${p.laydown + 2 * d}</b>, arrows <b>${p.arrow + d}</b>)` });
+      }
+      if (!options.length) return 'No simple line adjustment reaches the pocket with this release.';
+      recommendedLine = options.reduce((best, o) => o.move < best.move ? o : best);
+      return `To reach the pocket (${POCKET_BOARD}): ${options.map(o => o.text).join(', or ')}.`;
+    }
+
+    window.applyRecommendedLine = function() {
+      if (!recommendedLine) return;
+      document.getElementById('tr-laydown').value = recommendedLine.laydown;
+      document.getElementById('tr-arrow').value = recommendedLine.arrow;
+      onTrajInput();
+    };
+
+    window.onTrajInput = function() {
+      const saved = {};
+      TRAJ_INPUTS.forEach(id => { saved[id] = document.getElementById(id).value; });
+      writeJSON('bowling_traj_inputs', saved);
       drawLane();
+    };
+
+    function loadTrajInputs() {
+      const saved = readJSON('bowling_traj_inputs', {});
+      TRAJ_INPUTS.forEach(id => {
+        const el = document.getElementById(id);
+        if (saved[id] === undefined || saved[id] === '') return;
+        if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === saved[id])) return;
+        el.value = saved[id];
+      });
+    }
+
+    window.setRelease = function(speed, rpm, rot, tilt) {
+      document.getElementById('tr-speed').value = speed;
+      document.getElementById('tr-rpm').value = rpm;
+      document.getElementById('tr-rot').value = rot;
+      document.getElementById('tr-tilt').value = tilt;
+      onTrajInput();
     };
 
     function drawLane() {
@@ -696,37 +1071,36 @@
       const W = Math.min(cvs.parentElement.clientWidth, 420);
       if (!W) return; // view hidden
 
-      const params = {
-        laydown: readNum('tr-laydown', 25),
-        arrow: readNum('tr-arrow', 10),
-        arrowDistFt: Math.max(readNum('tr-dist', 13), 1),
-        bpBoard: readNum('tr-bp-board', 7),
-        bpDistFt: readNum('tr-bp-dist', 40),
-        pocket: readNum('tr-pocket', 17.5),
-        sharp: readNum('tr-sharp', 0.4)
-      };
-      const path = computePath(params);
+      const p = readTrajParams();
+      const shot = runShot(p);
+      const ball = p.ball;
+      document.getElementById('tr-ball-spec').textContent =
+        `RG ${ball.rg.toFixed(2)} · Diff ${ball.diff.toFixed(3)}${ball.mb ? ` · MB ${ball.mb.toFixed(3)}` : ''} · ${ball.cover} · ${ball.finish}`;
+      const result = shotResult(shot);
 
-      document.getElementById('tr-out-launch').textContent = `${path.launchDeg.toFixed(1)}°`;
-      document.getElementById('tr-out-bp').textContent = `${path.bp.b} @ ${Math.round(path.bp.y / 12)}'`;
-      document.getElementById('tr-out-hook').textContent = `${path.hookBoards.toFixed(1)} bd`;
-      document.getElementById('tr-out-entry').textContent = `${path.entryDeg.toFixed(1)}°`;
+      const ft = inches => `${Math.round(inches / 12)}'`;
+      document.getElementById('tr-out-bp').textContent = shot.breakpoint ? `${shot.breakpoint.b.toFixed(1)} @ ${ft(shot.breakpoint.yIn)}` : 'none';
+      document.getElementById('tr-out-pins').textContent = shot.gutterIn !== null ? '-' : shot.endBoard.toFixed(1);
+      document.getElementById('tr-out-entry').textContent = shot.gutterIn !== null ? '-' : `${shot.entryDeg.toFixed(1)}°`;
+      document.getElementById('tr-out-roll').textContent = shot.rollIn !== null ? ft(shot.rollIn) : 'past pins';
+      document.getElementById('tr-out-speed').textContent = `${shot.speedAtPins.toFixed(1)} mph`;
+      const resultEl = document.getElementById('tr-out-result');
+      resultEl.textContent = result;
+      resultEl.style.color = result === 'Pocket' ? 'var(--success-color)' : (result === 'High' || result === 'Light') ? 'var(--warning-color)' : 'var(--danger-color)';
+      document.getElementById('tr-advice').innerHTML = pocketAdvice(p, result);
+      const recBtn = document.getElementById('tr-recommend');
+      recBtn.disabled = !recommendedLine;
+      recBtn.textContent = recommendedLine
+        ? `Apply Recommended Line (${recommendedLine.laydown} → ${recommendedLine.arrow})`
+        : result === 'Pocket' ? 'In the Pocket' : 'No Recommendation';
 
-      // Horizontal: true scale. Vertical: the lane is heavily compressed, then eases into a
-      // gentler compression near the pins so the rack keeps a readable shape.
+      // Horizontal is true scale. The lane length is compressed uniformly; the pin deck
+      // uses a gentler compression so the rack keeps a readable triangle.
       const pxIn = W / TOTAL_WIDTH_IN;
-      const sTrue = pxIn * 0.55;
-      const y1 = 620, y2 = 712, yTop = 762, d = y2 - y1;
-      const targetPx = W * 3.2;
-      const sLane = Math.max(0.5, (targetPx - sTrue * d / 2 - sTrue * (yTop - y2)) / (y1 + d / 2));
-      const mapY = y => {
-        if (y <= y1) return sLane * y;
-        if (y <= y2) {
-          const u = (y - y1) / d;
-          return sLane * y1 + sLane * (y - y1) + (sTrue - sLane) * d * (u * u * u - u * u * u * u / 2);
-        }
-        return sLane * y1 + (sLane + sTrue) / 2 * d + sTrue * (y - y2);
-      };
+      const sLane = LANE.widthIn * pxIn * 3.4 / LANE.headPinIn;
+      const sDeck = pxIn * 0.55;
+      const yTop = 762;
+      const mapY = y => y <= LANE.headPinIn ? y * sLane : LANE.headPinIn * sLane + (y - LANE.headPinIn) * sDeck;
       const padBottom = 26, padTop = 2;
       const H = Math.round(padBottom + mapY(yTop) + padTop);
 
@@ -756,18 +1130,30 @@
         ctx.fillStyle = i % 2 === 0 ? '#e2ad6c' : '#d89f59';
         ctx.fillRect(laneLeft + i * boardW, sy(deckEnd), boardW + 0.5, sy(0) - sy(deckEnd));
       }
-      // Pin deck and pit
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
       ctx.fillRect(laneLeft, sy(deckEnd), laneW, sy(LANE.headPinIn - 8) - sy(deckEnd));
       ctx.fillStyle = '#111';
       ctx.fillRect(laneLeft, 0, laneW, sy(deckEnd));
 
+      // Oil: one column per board, fading out over the last 3 ft of the pattern
+      const oilEnd = p.oilFt * 12;
+      for (let b = 1; b <= LANE.boards; b++) {
+        const outside = p.pattern === 'house' ? Math.min(Math.max((10 - Math.min(b, 40 - b)) / 5, 0), 1) : 0;
+        const alpha = 0.3 * (1 - 0.75 * outside);
+        const grad = ctx.createLinearGradient(0, sy(0), 0, sy(oilEnd));
+        grad.addColorStop(0, `rgba(56,189,248,${alpha})`);
+        grad.addColorStop(Math.max(0, (oilEnd - 36) / oilEnd), `rgba(56,189,248,${alpha})`);
+        grad.addColorStop(1, 'rgba(56,189,248,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(bx(b) - boardW / 2, sy(oilEnd), boardW + 0.5, sy(0) - sy(oilEnd));
+      }
+
       // Distance markers
       ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      for (let ft = 10; ft <= 50; ft += 10) {
-        const y = sy(ft * 12);
+      for (let f = 10; f <= 50; f += 10) {
+        const y = sy(f * 12);
         ctx.strokeStyle = 'rgba(0,0,0,0.15)';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
@@ -777,9 +1163,12 @@
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`${ft}'`, laneLeft / 2, y);
+        ctx.fillText(`${f}'`, laneLeft / 2, y);
       }
       ctx.fillText(`60'`, laneLeft / 2, sy(LANE.headPinIn));
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('oil', laneLeft + laneW + laneLeft / 2, sy(oilEnd) - 6);
+      ctx.fillText(`${p.oilFt}'`, laneLeft + laneW + laneLeft / 2, sy(oilEnd) + 6);
 
       // Foul line, dots, arrows
       ctx.fillStyle = '#ef4444';
@@ -790,8 +1179,8 @@
         ctx.arc(bx(b), sy(DOT_Y), 2, 0, 2 * Math.PI);
         ctx.fill();
       });
-      ARROWS.forEach(a => {
-        const x = bx(a.b), y = sy(a.y), hw = boardW * 0.9;
+      ARROW_BOARDS.forEach(b => {
+        const x = bx(b), y = sy(arrowDistIn(b)), hw = boardW * 0.9;
         ctx.beginPath();
         ctx.moveTo(x, y - 9);
         ctx.lineTo(x + hw, y + 5);
@@ -805,45 +1194,65 @@
       ctx.fillStyle = '#94a3b8';
       for (let b = 5; b <= 35; b += 5) ctx.fillText(String(b), bx(b), sy(0) + 13);
 
-      // The ball is drawn just touching the head pin, using true (horizontal) scale for the gap.
-      const ballX = bx(path.contact.b);
-      const headPinY = sy(LANE.headPinIn);
-      const reachPx = (BALL_R_IN + PIN_R_IN) * pxIn;
-      const gapX = Math.abs(ballX - cx(0));
-      const ballY = headPinY + (gapX < reachPx ? Math.sqrt(reachPx * reachPx - gapX * gapX) : 0);
+      // Where the ball is drawn: touching the head pin, or wherever it left the lane.
+      let ballX = bx(shot.endBoard), ballY = sy(shot.pts[shot.pts.length - 1].yIn);
+      if (shot.gutterIn === null) {
+        const reachPx = (BALL_R_IN + PIN_R_IN) * pxIn;
+        const gapX = Math.abs(ballX - cx(0));
+        ballY = sy(LANE.headPinIn) + (gapX < reachPx ? Math.sqrt(reachPx * reachPx - gapX * gapX) : 0);
+      }
 
-      // Ball path
+      // Ball path, coloured by phase
+      const bpY = shot.breakpoint ? shot.breakpoint.yIn : 0;
+      const rollY = shot.rollIn !== null ? shot.rollIn : Infinity;
+      const phaseColor = y => y < bpY ? '#38bdf8' : y < rollY ? '#f59e0b' : '#22c55e';
       ctx.save();
-      ctx.beginPath();
-      path.pts.forEach((pt, i) => {
-        const x = bx(pt.b), y = Math.max(sy(pt.y), ballY);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-      });
-      ctx.lineTo(ballX, ballY);
-      ctx.strokeStyle = '#00bcff';
       ctx.lineWidth = 3;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#00bcff';
-      ctx.stroke();
+      ctx.shadowBlur = 6;
+      for (let i = 1; i < shot.pts.length; i++) {
+        const a = shot.pts[i - 1], b = shot.pts[i];
+        const isLast = i === shot.pts.length - 1;
+        const color = phaseColor(a.yIn);
+        ctx.strokeStyle = color;
+        ctx.shadowColor = color;
+        ctx.beginPath();
+        ctx.moveTo(bx(a.b), Math.max(sy(a.yIn), ballY));
+        ctx.lineTo(isLast ? ballX : bx(b.b), isLast ? ballY : Math.max(sy(b.yIn), ballY));
+        ctx.stroke();
+      }
       ctx.restore();
 
-      // Breakpoint marker
-      const bpX = bx(path.bp.b), bpY = sy(path.bp.y);
-      ctx.fillStyle = '#f59e0b';
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(bpX, bpY - 7);
-      ctx.lineTo(bpX + 7, bpY);
-      ctx.lineTo(bpX, bpY + 7);
-      ctx.lineTo(bpX - 7, bpY);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      // Breakpoint and roll-point markers
+      if (shot.breakpoint) {
+        const x = bx(shot.breakpoint.b), y = sy(shot.breakpoint.yIn);
+        ctx.fillStyle = '#f59e0b';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 7);
+        ctx.lineTo(x + 7, y);
+        ctx.lineTo(x, y + 7);
+        ctx.lineTo(x - 7, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      if (shot.rollIn !== null) {
+        const pt = shot.pts.find(q => q.yIn >= shot.rollIn) || shot.pts[shot.pts.length - 1];
+        ctx.fillStyle = '#22c55e';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(bx(pt.b), Math.max(sy(pt.yIn), ballY), 5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      }
 
       // Pins
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       PINS.forEach(pin => {
         const x = cx(pin.dx), y = sy(LANE.headPinIn + pin.row * ROW_IN), r = PIN_R_IN * pxIn;
         ctx.fillStyle = '#ffffff';
@@ -854,7 +1263,6 @@
         ctx.fill();
         ctx.stroke();
         ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(x, y, r * 0.62, 0, 2 * Math.PI);
         ctx.stroke();
@@ -863,9 +1271,9 @@
         ctx.fillText(String(pin.id), x, y + 0.5);
       });
 
-      // Ball at the moment it reaches the pocket
-      ctx.fillStyle = 'rgba(0, 188, 255, 0.4)';
-      ctx.strokeStyle = '#00bcff';
+      // Ball
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(ballX, ballY, BALL_R_IN * pxIn, 0, 2 * Math.PI);
@@ -878,35 +1286,170 @@
     });
 
     // ---------- Analytics ----------
+    // Pin positions as [row, column] with columns in 6" steps, used to recognise splits.
+    const PIN_POS = { 1: [0, 0], 2: [1, -1], 3: [1, 1], 4: [2, -2], 5: [2, 0], 6: [2, 2], 7: [3, -3], 8: [3, -1], 9: [3, 1], 10: [3, 3] };
+
+    // USBC split: head pin down, two or more pins standing, and either a pin down between
+    // standing pins, or a pin down directly ahead of and between two standing pins (e.g. 5-6).
+    function isSplit(leave) {
+      if (!leave || leave.length < 2 || leave.includes(1)) return false;
+      const touching = (a, b) => {
+        const [ra, xa] = PIN_POS[a], [rb, xb] = PIN_POS[b];
+        return (Math.abs(ra - rb) === 1 && Math.abs(xa - xb) === 1) || (Math.abs(ra - rb) === 2 && xa === xb);
+      };
+      const seen = new Set([leave[0]]);
+      const queue = [leave[0]];
+      while (queue.length) {
+        const a = queue.pop();
+        leave.forEach(b => { if (!seen.has(b) && touching(a, b)) { seen.add(b); queue.push(b); } });
+      }
+      if (seen.size < leave.length) return true;
+      return leave.some(a => leave.some(b => {
+        const [ra, xa] = PIN_POS[a], [rb, xb] = PIN_POS[b];
+        if (ra !== rb || xb - xa !== 2) return false;
+        const front = Object.keys(PIN_POS).find(id => PIN_POS[id][0] === ra - 1 && PIN_POS[id][1] === xa + 1);
+        return !leave.includes(Number(front));
+      }));
+    }
+
+    // Every rack bowled in a frame: its first ball, and the spare attempt if one followed.
+    function frameRacks(fr, f) {
+      const r = frameRolls(fr, f);
+      const racks = [];
+      const add = (first, second, leave) => {
+        const rack = { first, strike: first === 10 };
+        if (!rack.strike && second !== undefined) rack.spare = { left: 10 - first, made: first + second === 10, leave };
+        racks.push(rack);
+      };
+      if (!r.length) return racks;
+      if (f < 10) {
+        add(r[0], r[1], fr.leave);
+      } else if (r[0] === 10) {
+        add(10);
+        if (r.length > 1) {
+          if (r[1] === 10) { add(10); if (r.length > 2) add(r[2]); }
+          else add(r[1], r[2]);
+        }
+      } else {
+        add(r[0], r[1], fr.leave);
+        if (r.length > 2 && r[0] + r[1] === 10) add(r[2]);
+      }
+      return racks;
+    }
+
+    // "25-15" -> { laydown: 25, arrow: 15 }
+    function parseLine(text) {
+      const m = /^\s*(\d{1,2}(?:\.5)?)\s*[-–\/]\s*(\d{1,2}(?:\.5)?)/.exec(text || '');
+      if (!m) return null;
+      const laydown = parseFloat(m[1]), arrow = parseFloat(m[2]);
+      return laydown >= 1 && laydown <= 39 && arrow >= 1 && arrow <= 39 ? { laydown, arrow } : null;
+    }
+
+    const entryCache = new Map();
+    function estimateEntry(base, ballKey, line) {
+      const key = JSON.stringify([base.speed, base.rpm, base.rotation, base.tilt, base.pattern, base.oilFt,
+        document.getElementById('tr-surface').value, ballKey, line.laydown, line.arrow]);
+      if (!entryCache.has(key)) {
+        const shot = runShot({ ...base, ...ballFriction(ballKey), laydown: line.laydown, arrow: line.arrow });
+        entryCache.set(key, shot.gutterIn === null ? shot.entryDeg : null);
+      }
+      return entryCache.get(key);
+    }
+
+    function averageTier(avg) {
+      if (avg >= 220) return 'Pro / top-tier (220+)';
+      if (avg >= 200) return 'Elite amateur (200+)';
+      if (avg >= 170) return 'Strong advanced amateur (170–200)';
+      if (avg >= 140) return 'Developing (140–170)';
+      return 'Building fundamentals';
+    }
+
     function calcAnalytics() {
-      let totalPinfall = 0, completedGames = 0, totalB1 = 0, b1Count = 0;
-      let sparesMade = 0, spareOpp = 0, opens = 0, totalFrames = 0;
+      // Saved sessions plus the one being logged now (its latest version wins).
+      const sessions = getHistory().filter(s => s.id !== sessionData.id);
+      sessions.unshift(normalizeSession(JSON.parse(JSON.stringify(sessionData))));
+      const base = readTrajParams();
+      const t = {
+        games: [], series: [], sessions: 0, clean: 0,
+        racks: 0, strikes: 0, firstPins: 0,
+        spareTry: 0, spareMade: 0, singleTry: 0, singleMade: 0, multiTry: 0, multiMade: 0, splitTry: 0, splitMade: 0,
+        pocketMarked: 0, pocketHits: 0, pocketStrikes: 0,
+        frames: 0, opens: 0, entry: []
+      };
 
-      getHistory().forEach(sess => {
+      sessions.forEach(sess => {
+        let series = 0, used = false;
         for (let g = 1; g <= GAME_COUNT; g++) {
-          const frames = sess.games[g].frames;
-          const { cum } = scoreFrames(frames);
-          if (cum[9] !== null) { totalPinfall += cum[9]; completedGames++; }
-
+          const game = sess.games[g];
+          let gameOpens = 0;
           for (let f = 1; f <= 10; f++) {
-            const fr = frames[f];
-            if (!frameComplete(fr, f)) continue;
-            totalFrames++;
-            const r = frameRolls(fr, f);
-            totalB1 += r[0];
-            b1Count++;
-            if (r[0] < 10) {
-              spareOpp++;
-              if (fr.b2 === '/') sparesMade++; else opens++;
+            const fr = game.frames[f];
+            frameRacks(fr, f).forEach(rack => {
+              used = true;
+              t.racks++;
+              t.firstPins += rack.first;
+              if (rack.strike) t.strikes++;
+              if (!rack.spare) return;
+              const made = rack.spare.made ? 1 : 0;
+              t.spareTry++; t.spareMade += made;
+              if (rack.spare.left === 1) { t.singleTry++; t.singleMade += made; }
+              else { t.multiTry++; t.multiMade += made; }
+              if (isSplit(rack.spare.leave)) { t.splitTry++; t.splitMade += made; }
+            });
+            if (fr.pocket !== null) {
+              t.pocketMarked++;
+              if (fr.pocket) { t.pocketHits++; if (fr.b1 === 'X') t.pocketStrikes++; }
+            }
+            if (frameComplete(fr, f)) {
+              t.frames++;
+              const r = frameRolls(fr, f);
+              if (r[0] !== 10 && r[0] + r[1] !== 10) { t.opens++; gameOpens++; }
+            }
+            const line = parseLine(fr.line);
+            if (line && fr.b1 !== '') {
+              const e = estimateEntry(base, game.ball, line);
+              if (e !== null) t.entry.push(e);
             }
           }
+          const { cum } = scoreFrames(game.frames);
+          if (cum[9] !== null) {
+            t.games.push(cum[9]);
+            series += cum[9];
+            if (!gameOpens) t.clean++;
+          }
         }
+        if (used) t.sessions++;
+        if (series) t.series.push(series);
       });
 
-      document.getElementById('st-avg').innerText = completedGames ? (totalPinfall / completedGames).toFixed(1) : '0.0';
-      document.getElementById('st-fba').innerText = b1Count ? (totalB1 / b1Count).toFixed(2) : '0.0';
-      document.getElementById('st-spare').innerText = spareOpp ? Math.round((sparesMade / spareOpp) * 100) + '%' : '0%';
-      document.getElementById('st-opens').innerText = totalFrames ? `${opens} (${Math.round((opens / totalFrames) * 100)}%)` : '0 (0%)';
+      const set = (id, value, sub) => {
+        document.getElementById(id).textContent = value;
+        if (sub !== undefined) document.getElementById(`${id}-sub`).textContent = sub;
+      };
+      const pct = (n, d) => d ? `${Math.round(n / d * 100)}%` : '-';
+      const of = (n, d, extra = '') => d ? `${n} of ${d}${extra}` : 'No data yet';
+      const avg = t.games.length ? t.games.reduce((a, b) => a + b, 0) / t.games.length : 0;
+
+      set('st-avg', t.games.length ? avg.toFixed(1) : '-', t.games.length ? averageTier(avg) : 'Finish a game to see your average');
+      set('st-high', t.games.length ? Math.max(...t.games) : '-', `${t.games.length} complete game${t.games.length === 1 ? '' : 's'} · max 300`);
+      set('st-series', t.series.length ? Math.max(...t.series) : '-', t.series.length ? `Best session total` : 'No data yet');
+      set('st-clean', t.games.length ? t.clean : '-', `${pct(t.clean, t.games.length)} of games with no open frames`);
+
+      set('st-strike', pct(t.strikes, t.racks), of(t.strikes, t.racks, ' racks'));
+      set('st-fba', t.racks ? (t.firstPins / t.racks).toFixed(2) : '-');
+      set('st-pocket', pct(t.pocketHits, t.pocketMarked), of(t.pocketHits, t.pocketMarked, ' marked frames'));
+      set('st-carry', pct(t.pocketStrikes, t.pocketHits), t.pocketHits ? `${t.pocketStrikes} strike${t.pocketStrikes === 1 ? '' : 's'} on ${t.pocketHits} pocket hit${t.pocketHits === 1 ? '' : 's'}` : 'Mark pocket hits to track carry');
+
+      set('st-spare', pct(t.spareMade, t.spareTry), of(t.spareMade, t.spareTry));
+      set('st-single', pct(t.singleMade, t.singleTry), `${of(t.singleMade, t.singleTry)} · pros 95%+`);
+      set('st-multi', pct(t.multiMade, t.multiTry), of(t.multiMade, t.multiTry));
+      set('st-split', pct(t.splitMade, t.splitTry), t.splitTry ? `${t.splitMade} of ${t.splitTry} · hard splits ~2% even for pros` : 'Mark pin leaves to track splits');
+
+      set('st-opens', t.frames ? t.opens : '-', t.frames ? `${pct(t.opens, t.frames)} of ${t.frames} frames` : 'No data yet');
+      const entryAvg = t.entry.length ? t.entry.reduce((a, b) => a + b, 0) / t.entry.length : null;
+      set('st-entry', entryAvg !== null ? `${entryAvg.toFixed(1)}°` : '-', entryAvg !== null ? `${t.entry.length} frame${t.entry.length === 1 ? '' : 's'} with a Line · ideal ≈ 6°` : 'Log Lines like 25-15 to estimate');
+
+      set('st-scope', `${t.sessions} session${t.sessions === 1 ? '' : 's'} (saved sessions plus the one you're logging now)`);
     }
 
     // ---------- Persistence ----------
@@ -995,12 +1538,14 @@
     window.exportCSV = function() {
       autoSave();
       const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      let csv = 'Game,Frame,Ball 1,Ball 2,Ball 3,Score,Line,Frame Note\n';
+      let csv = 'Game,Ball Used,Frame,Ball 1,Ball 2,Ball 3,Score,Pins Left,Split,Pocket,Line,Frame Note\n';
       for (let g = 1; g <= GAME_COUNT; g++) {
-        const { cum } = scoreFrames(sessionData.games[g].frames);
+        const game = sessionData.games[g];
+        const { cum } = scoreFrames(game.frames);
         for (let f = 1; f <= 10; f++) {
-          const fr = sessionData.games[g].frames[f];
-          csv += `${g},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.line)},${q(fr.note)}\n`;
+          const fr = game.frames[f];
+          const pocket = fr.pocket === true ? 'Yes' : fr.pocket === false ? 'No' : '';
+          csv += `${g},${q(BALLS[game.ball].name)},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.leave.join('-'))},${isSplit(fr.leave) ? 'Yes' : ''},${pocket},${q(fr.line)},${q(fr.note)}\n`;
         }
       }
       const blob = new Blob([csv], { type: 'text/csv' });
