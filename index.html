@@ -113,6 +113,20 @@
     .status-info { font-size: 0.75rem; line-height: 1.4; background: rgba(56, 189, 248, 0.08); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; }
     .status-info p { margin-bottom: 6px; }
     .status-info ul { padding-left: 16px; margin-top: 2px; }
+    .opt-panel { background: var(--bg-color); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 0.75rem; line-height: 1.4; }
+    .opt-head { display: flex; gap: 10px; align-items: center; }
+    .opt-score { font-size: 1.7rem; font-weight: 800; color: var(--accent-color); min-width: 50px; text-align: center; }
+    .opt-line { font-size: 0.9rem; margin: 8px 0; }
+    .opt-line b { color: var(--accent-color); }
+    .opt-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .opt-table td { padding: 5px 3px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    .opt-table td:first-child { color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    .opt-table td:last-child { width: 54px; }
+    .opt-bar { display: block; height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; }
+    .opt-bar i { display: block; height: 100%; background: var(--success-color); }
+    .opt-panel .muted { color: var(--text-muted); margin-top: 8px; }
+    .opt-ball { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--border-color); }
+    .opt-ball:last-child { border-bottom: none; }
     .ball-spec { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
     .traj-advice { font-size: 0.75rem; color: var(--text-main); background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-top: 8px; line-height: 1.4; }
     .traj-advice b { color: var(--accent-color); }
@@ -247,7 +261,7 @@
 
         <div class="traj-section">Your Release</div>
         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
-          <button class="btn btn-secondary btn-sm" onclick="setRelease(16.5, 410, 45, 10)">My Profile</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRelease(16, 400, 45, 10)">My Profile</button>
           <button class="btn btn-secondary btn-sm" onclick="setRelease(15.5, 275, 30, 15)">Stroker</button>
           <button class="btn btn-secondary btn-sm" onclick="setRelease(17, 350, 45, 12)">Tweener</button>
           <button class="btn btn-secondary btn-sm" onclick="setRelease(18, 475, 55, 8)">Cranker</button>
@@ -255,11 +269,11 @@
         <div class="grid-4">
           <div class="form-group">
             <label>Speed (mph)</label>
-            <input type="number" id="tr-speed" value="16.5" min="10" max="24" step="0.5" oninput="onTrajInput()" />
+            <input type="number" id="tr-speed" value="16" min="10" max="24" step="0.5" oninput="onTrajInput()" />
           </div>
           <div class="form-group">
             <label>Rev Rate (rpm)</label>
-            <input type="number" id="tr-rpm" value="410" min="100" max="650" step="10" oninput="onTrajInput()" />
+            <input type="number" id="tr-rpm" value="400" min="100" max="650" step="10" oninput="onTrajInput()" />
           </div>
           <div class="form-group">
             <label>Axis Rot. (°)</label>
@@ -337,6 +351,8 @@
         </div>
         <div class="traj-advice" id="tr-advice"></div>
         <button class="btn btn-success" id="tr-recommend" style="width: 100%; margin-top: 8px;" onclick="applyRecommendedLine()">Apply Recommended Line</button>
+        <button class="btn" id="tr-optimal-btn" style="width: 100%; margin-top: 8px;" onclick="findOptimalTrajectory()">Find Optimal Trajectory</button>
+        <div class="opt-panel" id="tr-optimal" style="display: none;"></div>
 
         <div class="traj-legend">
           <span><i style="background:#38bdf8"></i>Skid</span>
@@ -461,8 +477,8 @@
     <!-- GAME PLAN VIEW -->
     <div id="view-plan" class="view-panel plan">
       <div class="plan-profile">
-        <div><span>Speed</span><b>16.5 mph</b></div>
-        <div><span>Revs</span><b>410 rpm</b></div>
+        <div><span>Speed</span><b>16 mph</b></div>
+        <div><span>Revs</span><b>400 rpm</b></div>
         <div><span>Rotation</span><b>45°</b></div>
         <div><span>Tilt</span><b>10°</b></div>
       </div>
@@ -512,7 +528,7 @@
             <li><b>2-and-1:</b> feet move 2 for every 1 with your eyes. Changes the angle as well as the position: use it when the lane changes, not for one bad shot.</li>
             <li><b>One change at a time,</b> then give it two good shots before judging it.</li>
             <li><b>Not just feet:</b> ball change, speed ±0.5 mph (faster = later hook), or less rotation in the hand (straighter).</li>
-            <li>Unsure? Put your line in <b>Trajectory</b> and tap <b>Apply Recommended Line</b>.</li>
+            <li>Unsure? Put your line in <b>Trajectory</b> and tap <b>Apply Recommended Line</b>, or <b>Find Optimal Trajectory</b> for the best strike line in the current conditions.</li>
           </ul>
         </div>
       </details>
@@ -550,7 +566,7 @@
             <li><b>String pinsetters:</b> pins deflect less, so good hits leave more corner pins. A strong roll and solid entry angle matter more, and so does your spare shooting.</li>
           </ul>
           <button class="btn btn-secondary btn-sm" onclick="showCenterStart('planet', 'viking')">Show on Lane</button>
-          <p class="plan-note" style="margin-top: 10px;">Model lines use eyes on board 15 and your current release on the Trajectory tab. The pattern sheet's suggested lines (slide 18–20 → arrow 10 at Classic, slide 14–16 → board 12 at Planet) suit lower rev rates; at 410 rpm they go high in the model.</p>
+          <p class="plan-note" style="margin-top: 10px;">Model lines use eyes on board 15 and your current release on the Trajectory tab. The pattern sheet's suggested lines (slide 18–20 → arrow 10 at Classic, slide 14–16 → board 12 at Planet) suit lower rev rates; at 400 rpm they go high in the model.</p>
         </div>
       </details>
 
@@ -581,7 +597,7 @@
         <div class="body">
           <h4>Game 1: Fresh oil · Viking Conquest</h4>
           <ul>
-            <li>Start at 28 at the foul line, eyes 15. Keep speed at 16.5 mph and the release relaxed.</li>
+            <li>Start at 28 at the foul line, eyes 15. Keep speed at 16 mph and the release relaxed.</li>
             <li>Pocket → stay put. Use the first 2–3 frames to learn the lane, not to chase it.</li>
             <li>As the track dries, the ball starts hooking earlier and hitting high. Move <b>left</b>, usually 2-and-1, to stay ahead of it.</li>
           </ul>
@@ -1181,8 +1197,8 @@
       return {
         laydown: readNum('tr-laydown', 25),
         arrow: readNum('tr-arrow', 15),
-        speed: Math.max(readNum('tr-speed', 16.5), 5),
-        rpm: Math.max(readNum('tr-rpm', 410), 0),
+        speed: Math.max(readNum('tr-speed', 16), 5),
+        rpm: Math.max(readNum('tr-rpm', 400), 0),
         rotation: readNum('tr-rot', 45),
         tilt: readNum('tr-tilt', 10),
         ...laneParams(),
@@ -1413,6 +1429,159 @@
       onTrajInput();
     };
 
+    // ---------- Optimal trajectory ----------
+    // Scores a line (0-1) on what makes strikes: hitting the pocket, entry angle, forgiveness
+    // when you miss your target by a board, the ball finishing its hook near the pins without
+    // rolling out early, and an exit (breakpoint) board near the pattern's target.
+    const STRIKE_BALLS = ['viking', 'zen', 'lock'];
+    const STRIKE_WEIGHTS = { pocket: 0.3, entry: 0.2, room: 0.25, phase: 0.1, breakpoint: 0.15 };
+    const bell = (v, mid, sd) => Math.exp(-0.5 * ((v - mid) / sd) ** 2);
+
+    function strikeScore(p) {
+      const shot = runShot(p);
+      if (shot.gutterIn !== null) return { score: 0, shot, parts: null };
+      const targetBp = p.oilFt - 31;
+      const roll = shot.rollIn === null ? null : shot.rollIn / 12;
+      const missBoards = [-1, 1].map(d => {
+        const miss = runShot({ ...p, arrow: p.arrow + d });
+        return miss.gutterIn !== null ? null : miss.endBoard;
+      });
+      const parts = {
+        pocket: bell(shot.endBoard, POCKET_BOARD, 0.9),
+        entry: shot.entryDeg >= 4 && shot.entryDeg <= 7 ? 1 : bell(shot.entryDeg, shot.entryDeg < 4 ? 4 : 7, 1.5),
+        room: missBoards.reduce((sum, b) => sum + (b === null ? 0 : bell(b, POCKET_BOARD, 3)), 0) / 2,
+        phase: roll === null ? 0.6 : roll >= 48 ? 1 : bell(roll, 48, 6),
+        breakpoint: shot.breakpoint ? bell(shot.breakpoint.b, targetBp, 2.5) * (shot.breakpoint.b < 3 ? 0.3 : 1) : 0.4
+      };
+      const score = Object.keys(STRIKE_WEIGHTS).reduce((sum, k) => sum + STRIKE_WEIGHTS[k] * parts[k], 0);
+      return { score, shot, parts, missBoards, targetBp };
+    }
+
+    // Tries every target at the arrows, finds the foul-line board that carries each one to the
+    // pocket, and keeps the line with the best strike score.
+    function findOptimalLine(p) {
+      let best = null;
+      const consider = (laydown, arrow) => {
+        if (laydown === null || arrow < 1 || arrow > 39) return;
+        const r = strikeScore({ ...p, laydown, arrow });
+        if (!best || r.score > best.score) best = { ...r, laydown, arrow };
+      };
+      const pocketLaydown = (arrow, near) => solveForPocket(Math.max(1, arrow - 6), 39, near, v => ({ ...p, arrow, laydown: v }));
+      for (let arrow = 3; arrow <= 30; arrow++) consider(pocketLaydown(arrow, arrow + 8), arrow);
+      if (best) {
+        const { arrow, laydown } = best;
+        [arrow - 0.5, arrow + 0.5].forEach(a => consider(pocketLaydown(a, laydown), a));
+      }
+      return best;
+    }
+
+    let optimalKey = null;
+    let optimalLine = null;
+    // Everything that affects the result except the line itself.
+    const conditionsKey = p => JSON.stringify({ ...p, laydown: 0, arrow: 0 });
+    const pct = v => Math.round(v * 100);
+
+    window.findOptimalTrajectory = function() {
+      const btn = document.getElementById('tr-optimal-btn');
+      btn.disabled = true;
+      btn.textContent = 'Calculating…';
+      setTimeout(() => {
+        const p = readTrajParams();
+        const ballKey = document.getElementById('tr-ball').value;
+        const best = findOptimalLine(p);
+        optimalKey = conditionsKey(p);
+        btn.disabled = false;
+        btn.textContent = 'Find Optimal Trajectory';
+        renderOptimal(p, best, strikeScore(p));
+        compareBalls(p, ballKey, best);
+      }, 30);
+    };
+
+    function renderOptimal(p, best, current) {
+      const panel = document.getElementById('tr-optimal');
+      panel.style.display = '';
+      optimalLine = best ? { laydown: best.laydown, arrow: best.arrow } : null;
+      if (!best) {
+        panel.innerHTML = '<p>No line reaches the pocket with this ball, release and lane. Try another ball or lane status.</p>';
+        return;
+      }
+      const s = best.shot;
+      const ft = inches => `${Math.round(inches / 12)}'`;
+      const bpIn = s.breakpoint ? s.breakpoint.yIn : 0;
+      const phase = s.rollIn !== null
+        ? `Skid 0–${ft(bpIn)} · Hook ${ft(bpIn)}–${ft(s.rollIn)} · Roll ${ft(s.rollIn)}–60'`
+        : `Skid 0–${ft(bpIn)} · Hook ${ft(bpIn)}–60' (still hooking at the pins)`;
+      const rows = [
+        ['Pocket', `Board ${s.endBoard.toFixed(1)} at the pins (target ${POCKET_BOARD})`, best.parts.pocket],
+        ['Entry angle', `${s.entryDeg.toFixed(1)}° (ideal 4–7°)`, best.parts.entry],
+        ['Miss room', `Miss the arrows by 1 board → pins at ${best.missBoards.map(b => b === null ? 'gutter' : b.toFixed(1)).join(' / ')}`, best.parts.room],
+        ['Phase', phase, best.parts.phase],
+        ['Exit board', s.breakpoint ? `${s.breakpoint.b.toFixed(1)} at ${ft(bpIn)} (target ≈ ${best.targetBp})` : 'None', best.parts.breakpoint]
+      ];
+      const centerLabel = CENTERS[p.centerKey] ? CENTERS[p.centerKey].name : 'Custom pattern';
+      panel.innerHTML = `
+        <div class="opt-head">
+          <div class="opt-score">${pct(best.score)}</div>
+          <div><b>Strike score</b> (out of 100)<div class="muted" style="margin-top: 0;">${p.ball.name} · ${centerLabel} · ${LANE_STATUS[p.statusKey].name} · ${p.speed} mph, ${p.rpm} rpm</div></div>
+        </div>
+        <p class="opt-line">Lay down on <b>${best.laydown}</b> → <b>${best.arrow}</b> at the arrows</p>
+        <table class="opt-table">${rows.map(([name, detail, part]) =>
+          `<tr><td>${name}</td><td>${detail}</td><td><span class="opt-bar"><i style="width: ${pct(part)}%"></i></span></td></tr>`).join('')}</table>
+        <button class="btn btn-success" id="tr-opt-apply" style="width: 100%;" onclick="applyOptimalLine()">Apply Optimal Line (${best.laydown} → ${best.arrow})</button>
+        <p class="muted">Your current line (${p.laydown} → ${p.arrow}) scores ${pct(current.score)}. Speed at the pins on the optimal line: ${s.speedAtPins.toFixed(1)} mph.</p>
+        <div class="muted" id="tr-opt-balls">Comparing your other strike balls…</div>`;
+      updateOptimalApply();
+    }
+
+    // Best line for each strike ball under the same release and lane, one ball at a time so the page stays responsive.
+    function compareBalls(p, ballKey, bestForCurrent) {
+      const key = optimalKey;
+      const results = [];
+      const next = i => {
+        if (optimalKey !== key) return;
+        if (i === STRIKE_BALLS.length) {
+          const el = document.getElementById('tr-opt-balls');
+          if (!el) return;
+          const top = results.reduce((a, b) => (b.score > a.score ? b : a));
+          el.innerHTML = '<b>Best line for each ball</b>' + results.map(r => `
+            <div class="opt-ball"><span>${r.name}${r.key === top.key ? ' ★' : ''}</span>
+              <span>${r.best ? `${r.best.laydown} → ${r.best.arrow} · <b>${pct(r.score)}</b>` : 'no line'}
+              ${r.best && r.key !== ballKey ? `<button class="btn btn-secondary btn-sm" onclick="useBallLine('${r.key}', ${r.best.laydown}, ${r.best.arrow})">Use</button>` : ''}</span></div>`).join('') +
+            (top.key !== ballKey ? `<div style="margin-top: 4px;">★ ${top.name} scores best in these conditions.</div>` : '');
+          return;
+        }
+        setTimeout(() => {
+          const k = STRIKE_BALLS[i];
+          const best = k === ballKey ? bestForCurrent : findOptimalLine({ ...p, ...ballFriction(k) });
+          results.push({ key: k, name: BALLS[k].name, best, score: best ? best.score : 0 });
+          next(i + 1);
+        }, 20);
+      };
+      next(0);
+    }
+
+    function updateOptimalApply() {
+      const btn = document.getElementById('tr-opt-apply');
+      if (!btn || !optimalLine) return;
+      const using = readNum('tr-laydown', 0) === optimalLine.laydown && readNum('tr-arrow', 0) === optimalLine.arrow;
+      btn.disabled = using;
+      btn.textContent = using ? 'Using Optimal Line' : `Apply Optimal Line (${optimalLine.laydown} → ${optimalLine.arrow})`;
+    }
+
+    window.applyOptimalLine = function() {
+      if (!optimalLine) return;
+      document.getElementById('tr-laydown').value = optimalLine.laydown;
+      document.getElementById('tr-arrow').value = optimalLine.arrow;
+      onTrajInput();
+    };
+
+    window.useBallLine = function(ball, laydown, arrow) {
+      document.getElementById('tr-ball').value = ball;
+      document.getElementById('tr-laydown').value = laydown;
+      document.getElementById('tr-arrow').value = arrow;
+      onTrajInput();
+    };
+
     window.onTrajInput = function() {
       const saved = {};
       TRAJ_INPUTS.forEach(id => { saved[id] = document.getElementById(id).value; });
@@ -1480,6 +1649,13 @@
       recBtn.textContent = recommendedLine
         ? `Apply Recommended Line (${recommendedLine.laydown} → ${recommendedLine.arrow})`
         : result === 'Pocket' ? 'In the Pocket' : 'No Recommendation';
+      // The optimal-line result only holds while the ball, release and lane stay the same.
+      if (optimalKey !== null && optimalKey !== conditionsKey(p)) {
+        optimalKey = null;
+        optimalLine = null;
+        document.getElementById('tr-optimal').style.display = 'none';
+      }
+      updateOptimalApply();
 
       // Horizontal is true scale. The lane length is compressed uniformly; the pin deck
       // uses a gentler compression so the rack keeps a readable triangle.
