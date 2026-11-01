@@ -169,9 +169,17 @@
             <input type="date" id="session-date" onchange="autoSave()" />
           </div>
           <div class="form-group">
-            <label>Center / Oil Pattern</label>
-            <input type="text" id="session-center" placeholder="e.g. Classic Bowl / House" onchange="autoSave()" />
+            <label>Center</label>
+            <select id="session-center-id" onchange="onSessionCenter()">
+              <option value="classic">Classic Bowl</option>
+              <option value="planet">Planet Bowl</option>
+              <option value="other">Other</option>
+            </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label>Pattern / Lane Notes</label>
+          <input type="text" id="session-center" placeholder="e.g. lanes 7-8, fresh oil" onchange="autoSave()" />
         </div>
       </div>
 
@@ -269,7 +277,26 @@
           </select>
           <div class="ball-spec" id="tr-ball-spec"></div>
         </div>
-        <div class="grid-3">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Center</label>
+            <select id="tr-center" onchange="onTrajInput()">
+              <option value="classic">Classic Bowl</option>
+              <option value="planet">Planet Bowl</option>
+              <option value="custom">Custom pattern</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Surface</label>
+            <select id="tr-surface" onchange="onTrajInput()">
+              <option value="factory" selected>Factory</option>
+              <option value="polished">Polished</option>
+              <option value="sanded">Sanded / Dull</option>
+            </select>
+          </div>
+        </div>
+        <div class="ball-spec" id="tr-center-spec" style="margin: -4px 0 8px;"></div>
+        <div class="grid-2" id="tr-custom-pattern">
           <div class="form-group">
             <label>Oil Pattern</label>
             <select id="tr-pattern" onchange="onTrajInput()">
@@ -280,14 +307,6 @@
           <div class="form-group">
             <label>Length (ft)</label>
             <input type="number" id="tr-oil" value="40" min="30" max="50" step="1" oninput="onTrajInput()" />
-          </div>
-          <div class="form-group">
-            <label>Surface</label>
-            <select id="tr-surface" onchange="onTrajInput()">
-              <option value="factory" selected>Factory</option>
-              <option value="polished">Polished</option>
-              <option value="sanded">Sanded / Dull</option>
-            </select>
           </div>
         </div>
 
@@ -318,6 +337,15 @@
 
     <!-- ANALYTICS VIEW -->
     <div id="view-stats" class="view-panel">
+      <div class="form-group">
+        <label>Center</label>
+        <select id="st-center" onchange="calcAnalytics()">
+          <option value="all">All centers</option>
+          <option value="classic">Classic Bowl</option>
+          <option value="planet">Planet Bowl</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
       <p class="stats-scope" id="st-scope"></p>
       <div class="stats-heading">Scoring</div>
       <div class="stats-grid">
@@ -472,7 +500,36 @@
       </details>
 
       <details>
-        <summary>Starting Lines (Fresh Oil)</summary>
+        <summary>Centers: League Night Lanes</summary>
+        <div class="body">
+          <h4>🎳 Classic Bowl · Brunswick</h4>
+          <p class="muted">Recreational THS · 40 ft · 24.5 mL · 11:1 · breakpoint target ≈ board 9</p>
+          <ul>
+            <li><b>Lane read:</b> heavy oil block in the middle (about boards 12–28) with a sharp "cliff" from board 8 out. Slick Brunswick lanes mean a long skid, then a sharp turn when the ball finds the dry.</li>
+            <li><b>Start with the Zen Soul:</b> it gets cleanly through the heavy middle and reacts quickly at the cliff. Go to the Viking if the ball skids through the cliff and hits light.</li>
+            <li><b>Model start for your release:</b> <span class="center-line" data-center="classic" data-ball="zen"></span></li>
+            <li><b>Play the cliff:</b> get the ball out to board 8–9 and let it turn. Further outside than ~7 it grabs hard and goes high, so missing right is riskier than missing left.</li>
+            <li><b>As it breaks down:</b> boards 8–10 dry and the cliff moves inside. Move left (2-and-1) and keep the breakpoint around 9.</li>
+          </ul>
+          <button class="btn btn-secondary btn-sm" onclick="showCenterStart('classic', 'zen')">Show on Lane</button>
+
+          <h4 style="margin-top: 14px;">🪐 Planet Bowl · AMF / QubicaAMF</h4>
+          <p class="muted">Standard League THS · 42 ft · 25.5 mL · 8.5:1 · breakpoint target ≈ board 11</p>
+          <ul>
+            <li><b>Lane read:</b> oil fades gradually out toward board 5, with no hard wall. The AMF surface grips sooner, so the ball reads earlier and arcs smoothly instead of "bouncing".</li>
+            <li><b>Start with the Viking Conquest:</b> solid 2000-grit cover and asymmetric core, so it reads the longer pattern early and rolls strong through the pins.</li>
+            <li><b>Model start for your release:</b> <span class="center-line" data-center="planet" data-ball="viking"></span></li>
+            <li><b>Play it tighter:</b> keep the line more direct. Don't throw it wide expecting it to come back; the gradual outside won't hold it the way Classic's cliff does.</li>
+            <li><b>As it breaks down:</b> the blended oil carries down. Weak 10-pins or sliding past the pocket → move right 1-and-1, or switch to more surface (Storm Lock).</li>
+            <li><b>String pinsetters:</b> pins deflect less, so good hits leave more corner pins. A strong roll and solid entry angle matter more, and so does your spare shooting.</li>
+          </ul>
+          <button class="btn btn-secondary btn-sm" onclick="showCenterStart('planet', 'viking')">Show on Lane</button>
+          <p class="plan-note" style="margin-top: 10px;">Model lines use eyes on board 15 and your current release on the Trajectory tab. The pattern sheet's suggested lines (slide 18–20 → arrow 10 at Classic, slide 14–16 → board 12 at Planet) suit lower rev rates; at 410 rpm they go high in the model.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Starting Lines (Your Notes)</summary>
         <div class="body">
           <table>
             <thead><tr><th>Ball</th><th>Foul Line</th><th>Eyes</th><th>Breakpoint</th><th></th></tr></thead>
@@ -572,7 +629,8 @@
     }
 
     function newSession() {
-      const s = { v: DATA_VERSION, id: Date.now(), date: todayLocal(), center: '', notes: '', games: {} };
+      // centerId picks the lane profile (CENTERS); center is free-text notes about the pattern / lanes.
+      const s = { v: DATA_VERSION, id: Date.now(), date: todayLocal(), centerId: 'classic', center: '', notes: '', games: {} };
       for (let g = 1; g <= GAME_COUNT; g++) {
         s.games[g] = { ball: 'viking', frames: {} };
         for (let f = 1; f <= 10; f++) s.games[g].frames[f] = blankFrame();
@@ -585,6 +643,7 @@
     // nothing but '-' in it is treated as not bowled.
     function normalizeSession(s) {
       const legacy = !s.v;
+      if (!s.centerId) s.centerId = /planet/i.test(s.center || '') ? 'planet' : /classic/i.test(s.center || '') ? 'classic' : 'other';
       s.games = s.games || {};
       for (let g = 1; g <= GAME_COUNT; g++) {
         s.games[g] = s.games[g] || { frames: {} };
@@ -785,6 +844,7 @@
     function fillSessionFields() {
       document.getElementById('session-date').value = sessionData.date || '';
       document.getElementById('session-center').value = sessionData.center || '';
+      document.getElementById('session-center-id').value = sessionData.centerId;
       document.getElementById('session-notes').value = sessionData.notes || '';
     }
 
@@ -792,6 +852,7 @@
       loadCurrentSession();
       fillSessionFields();
       loadTrajInputs();
+      syncTrajCenter();
       renderGames();
       window.switchGame(1);
       calcAnalytics();
@@ -881,6 +942,18 @@
       autoSave();
     };
 
+    // Picking a center in the log also sets the Trajectory tab's lane profile.
+    window.onSessionCenter = function() {
+      autoSave();
+      syncTrajCenter();
+    };
+
+    function syncTrajCenter() {
+      if (!CENTERS[sessionData.centerId]) return;
+      document.getElementById('tr-center').value = sessionData.centerId;
+      onTrajInput();
+    }
+
     window.setGameBall = function(g, ball) {
       sessionData.games[g].ball = ball;
       autoSave();
@@ -965,7 +1038,45 @@
     };
     // Relative to the factory finish.
     const SURFACE = { factory: 1, polished: 0.85, sanded: 1.15 };
-    const TRAJ_INPUTS = ['tr-laydown', 'tr-arrow', 'tr-speed', 'tr-rpm', 'tr-rot', 'tr-tilt', 'tr-ball', 'tr-pattern', 'tr-oil', 'tr-surface'];
+    // League-night lane profiles. oilEdge / dryEdge: boards from either gutter where the oil
+    // line starts falling off and where the outside is dry. laneOil / laneDry scale friction
+    // for the lane surface (Brunswick panels are slicker, AMF surfaces bite into oil sooner).
+    const CENTERS = {
+      classic: {
+        name: 'Classic Bowl', lanes: 'Brunswick', pattern: 'Brunswick Recreational (THS)',
+        oilFt: 40, volumeMl: 24.5, ratio: 11, oilEdge: 9, dryEdge: 6, laneOil: 0.9, laneDry: 1.0,
+        shape: 'Heavy center block, sharp drop-off from board 8 out'
+      },
+      planet: {
+        name: 'Planet Bowl', lanes: 'AMF / QubicaAMF', pattern: 'AMF Standard League (THS)',
+        oilFt: 42, volumeMl: 25.5, ratio: 8.5, oilEdge: 11, dryEdge: 4, laneOil: 1.15, laneDry: 1.05,
+        shape: 'Centered, feathered out gradually toward board 5'
+      }
+    };
+    const TRAJ_INPUTS = ['tr-laydown', 'tr-arrow', 'tr-speed', 'tr-rpm', 'tr-rot', 'tr-tilt', 'tr-ball', 'tr-center', 'tr-pattern', 'tr-oil', 'tr-surface'];
+
+    function centerName(session) {
+      return CENTERS[session.centerId] ? CENTERS[session.centerId].name : (session.center || 'Other center');
+    }
+
+    // Oil shape for a center, or for the custom pattern inputs.
+    function laneParams(centerKey = document.getElementById('tr-center').value) {
+      const c = CENTERS[centerKey];
+      if (c) {
+        return {
+          centerKey, oilFt: c.oilFt, oilEdge: c.oilEdge, dryEdge: c.dryEdge,
+          // Steeper ratio = drier outside relative to the middle.
+          outsideFrac: Math.min(0.2 + 0.03 * c.ratio, 0.9),
+          laneOil: c.laneOil * 25 / c.volumeMl,
+          laneDry: c.laneDry
+        };
+      }
+      const house = document.getElementById('tr-pattern').value === 'house';
+      return {
+        centerKey: 'custom', oilFt: readNum('tr-oil', 40), oilEdge: 10, dryEdge: 5,
+        outsideFrac: house ? 0.35 : 0, laneOil: 1, laneDry: 1
+      };
+    }
 
     // Arrows run from 12 ft (boards 5 and 35) to 15 ft (board 20).
     function arrowDistIn(board) {
@@ -990,8 +1101,7 @@
         rpm: Math.max(readNum('tr-rpm', 410), 0),
         rotation: readNum('tr-rot', 45),
         tilt: readNum('tr-tilt', 10),
-        pattern: document.getElementById('tr-pattern').value,
-        oilFt: readNum('tr-oil', 40),
+        ...laneParams(),
         ...ballFriction()
       };
     }
@@ -1010,20 +1120,22 @@
       };
     }
 
+    // 0 inside the oil line, 1 on the dry outside boards, blended between oilEdge and dryEdge.
+    function outsideFactor(board, p) {
+      const fromGutter = Math.min(board, 40 - board);
+      return Math.min(Math.max((p.oilEdge - fromGutter) / (p.oilEdge - p.dryEdge), 0), 1);
+    }
+
     // Friction coefficient at a point (x = metres from the right edge, y = metres past the foul line).
-    // House patterns carry less oil outside, so the outer boards hold (hook) more.
+    // House-style patterns carry less oil outside, so the outer boards hold (hook) more.
     function frictionAt(x, y, p) {
-      const dry = PHYS.MU_DRY * p.dryMult;
+      const dry = PHYS.MU_DRY * p.dryMult * p.laneDry;
       const yFt = y / PHYS.FT;
       if (yFt >= p.oilFt) return dry;
-      const oil = (PHYS.MU_OIL_FRONT + (PHYS.MU_OIL_BACK - PHYS.MU_OIL_FRONT) * Math.min(yFt / p.oilFt, 1)) * p.oilMult;
+      const oil = (PHYS.MU_OIL_FRONT + (PHYS.MU_OIL_BACK - PHYS.MU_OIL_FRONT) * Math.min(yFt / p.oilFt, 1)) * p.oilMult * p.laneOil;
       let mu = yFt < p.oilFt - 3 ? oil : oil + (dry - oil) * (yFt - (p.oilFt - 3)) / 3;
-      if (p.pattern === 'house') {
-        const board = x / PHYS.BW + 0.5;
-        const outside = Math.min(Math.max((10 - Math.min(board, 40 - board)) / 5, 0), 1);
-        const outsideMu = dry * 0.35;
-        if (outsideMu > mu) mu += (outsideMu - mu) * outside;
-      }
+      const outsideMu = dry * p.outsideFrac;
+      if (outsideMu > mu) mu += (outsideMu - mu) * outsideFactor(x / PHYS.BW + 0.5, p);
       return mu;
     }
 
@@ -1211,6 +1323,11 @@
 
       const p = readTrajParams();
       const shot = runShot(p);
+      const center = CENTERS[p.centerKey];
+      document.getElementById('tr-custom-pattern').style.display = center ? 'none' : '';
+      document.getElementById('tr-center-spec').textContent = center
+        ? `${center.pattern} · ${center.oilFt} ft · ${center.volumeMl} mL · ${center.ratio}:1 · target breakpoint ≈ board ${center.oilFt - 31}`
+        : 'Set the pattern type and length below.';
       const ball = p.ball;
       document.getElementById('tr-ball-spec').textContent =
         `RG ${ball.rg.toFixed(2)} · Diff ${ball.diff.toFixed(3)}${ball.mb ? ` · MB ${ball.mb.toFixed(3)}` : ''} · ${ball.cover} · ${ball.finish}`;
@@ -1276,7 +1393,7 @@
       // Oil: one column per board, fading out over the last 3 ft of the pattern
       const oilEnd = p.oilFt * 12;
       for (let b = 1; b <= LANE.boards; b++) {
-        const outside = p.pattern === 'house' ? Math.min(Math.max((10 - Math.min(b, 40 - b)) / 5, 0), 1) : 0;
+        const outside = p.outsideFrac ? outsideFactor(b, p) : 0;
         const alpha = 0.3 * (1 - 0.75 * outside);
         const grad = ctx.createLinearGradient(0, sy(0), 0, sy(oilEnd));
         grad.addColorStop(0, `rgba(56,189,248,${alpha})`);
@@ -1485,7 +1602,7 @@
 
     const entryCache = new Map();
     function estimateEntry(base, ballKey, line) {
-      const key = JSON.stringify([base.speed, base.rpm, base.rotation, base.tilt, base.pattern, base.oilFt,
+      const key = JSON.stringify([base.speed, base.rpm, base.rotation, base.tilt, base.centerKey, base.oilFt, base.outsideFrac,
         document.getElementById('tr-surface').value, ballKey, line.laydown, line.arrow]);
       if (!entryCache.has(key)) {
         const shot = runShot({ ...base, ...ballFriction(ballKey), laydown: line.laydown, arrow: line.arrow });
@@ -1506,7 +1623,8 @@
       // Saved sessions plus the one being logged now (its latest version wins).
       const sessions = getHistory().filter(s => s.id !== sessionData.id);
       sessions.unshift(normalizeSession(JSON.parse(JSON.stringify(sessionData))));
-      const base = readTrajParams();
+      const filter = document.getElementById('st-center').value;
+      const release = readTrajParams();
       const t = {
         games: [], series: [], sessions: 0, clean: 0,
         racks: 0, strikes: 0, firstPins: 0,
@@ -1516,6 +1634,9 @@
       };
 
       sessions.forEach(sess => {
+        if (filter !== 'all' && sess.centerId !== filter) return;
+        // Entry angles use this session's lanes; "Other" falls back to the custom pattern.
+        const base = { ...release, ...laneParams(CENTERS[sess.centerId] ? sess.centerId : 'custom') };
         let series = 0, used = false;
         for (let g = 1; g <= GAME_COUNT; g++) {
           const game = sess.games[g];
@@ -1594,6 +1715,7 @@
     window.autoSave = function() {
       sessionData.date = document.getElementById('session-date').value;
       sessionData.center = document.getElementById('session-center').value;
+      sessionData.centerId = document.getElementById('session-center-id').value;
       sessionData.notes = document.getElementById('session-notes').value;
       writeJSON('bowling_active_session', sessionData);
     };
@@ -1630,7 +1752,7 @@
         return `
         <div class="history-item">
           <div class="history-info">
-            <h4>${escapeHtml(s.date)} - ${escapeHtml(s.center || 'Unspecified Center')}</h4>
+            <h4>${escapeHtml(s.date)} - ${escapeHtml(centerName(s))}</h4>
             <p>${summary ? escapeHtml(summary) + ' · ' : ''}${escapeHtml(notes)}</p>
           </div>
           <div style="display: flex; gap: 4px;">
@@ -1647,6 +1769,7 @@
         sessionData = JSON.parse(JSON.stringify(session));
         fillSessionFields();
         autoSave();
+        syncTrajCenter();
         renderGames();
         window.switchGame(1);
         window.switchView('log');
@@ -1671,6 +1794,7 @@
     // ---------- Game plan ----------
     // Straight spare lines through board 20 at the arrows, grouped by pins that share a line.
     function renderPlan() {
+      renderCenterLines();
       const eyes = 20, eyesDist = arrowDistIn(eyes);
       const groups = [[7], [4], [2, 8], [1, 5], [3, 9], [6], [10]];
       document.getElementById('plan-spares').innerHTML = groups.map(group => {
@@ -1681,6 +1805,30 @@
         return `<tr><td><b>${group.join(' / ')}</b></td><td>${laydown}</td><td>${eyes}</td></tr>`;
       }).join('');
     }
+
+    const CENTER_EYES = 15;
+
+    // Foul-line board that carries to the pocket with eyes on CENTER_EYES at a center,
+    // using the release on the Trajectory tab.
+    function centerStartLine(centerKey, ball) {
+      const base = { ...readTrajParams(), ...laneParams(centerKey), ...ballFriction(ball), arrow: CENTER_EYES };
+      return solveForPocket(1, 39, 25, v => ({ ...base, laydown: v }));
+    }
+
+    function renderCenterLines() {
+      document.querySelectorAll('#view-plan .center-line').forEach(el => {
+        const laydown = centerStartLine(el.dataset.center, el.dataset.ball);
+        el.textContent = laydown === null
+          ? 'no pocket line found with eyes on 15'
+          : `${laydown} at the foul line → ${CENTER_EYES} at the arrows`;
+      });
+    }
+
+    window.showCenterStart = function(centerKey, ball) {
+      const laydown = centerStartLine(centerKey, ball);
+      document.getElementById('tr-center').value = centerKey;
+      showLineOnLane(ball, laydown === null ? 25 : laydown, CENTER_EYES);
+    };
 
     window.showLineOnLane = function(ball, laydown, arrow) {
       document.getElementById('tr-ball').value = ball;
@@ -1694,14 +1842,14 @@
     window.exportCSV = function() {
       autoSave();
       const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      let csv = 'Game,Ball Used,Frame,Ball 1,Ball 2,Ball 3,Score,Pins Left,Split,Pocket,Line,Frame Note\n';
+      let csv = 'Center,Game,Ball Used,Frame,Ball 1,Ball 2,Ball 3,Score,Pins Left,Split,Pocket,Line,Frame Note\n';
       for (let g = 1; g <= GAME_COUNT; g++) {
         const game = sessionData.games[g];
         const { cum } = scoreFrames(game.frames);
         for (let f = 1; f <= 10; f++) {
           const fr = game.frames[f];
           const pocket = fr.pocket === true ? 'Yes' : fr.pocket === false ? 'No' : '';
-          csv += `${g},${q(BALLS[game.ball].name)},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.leave.join('-'))},${isSplit(fr.leave) ? 'Yes' : ''},${pocket},${q(fr.line)},${q(fr.note)}\n`;
+          csv += `${q(centerName(sessionData))},${g},${q(BALLS[game.ball].name)},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.leave.join('-'))},${isSplit(fr.leave) ? 'Yes' : ''},${pocket},${q(fr.line)},${q(fr.note)}\n`;
         }
       }
       const blob = new Blob([csv], { type: 'text/csv' });
