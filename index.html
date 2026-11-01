@@ -118,6 +118,12 @@
     .status-info { font-size: 0.75rem; line-height: 1.4; background: rgba(56, 189, 248, 0.08); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; }
     .status-info p { margin-bottom: 6px; }
     .status-info ul { padding-left: 16px; margin-top: 2px; }
+    .fix-btn { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; text-align: left; margin-top: 6px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 10px; border-radius: 6px; font-size: 0.75rem; line-height: 1.4; cursor: pointer; }
+    .fix-btn b { color: var(--accent-color); }
+    .fix-btn.best { border-color: var(--success-color); }
+    .fix-tag { color: var(--success-color); font-weight: 700; font-size: 0.65rem; }
+    .fix-score { font-size: 1.1rem; font-weight: 800; color: var(--accent-color); flex-shrink: 0; }
+    .traj-advice .muted { color: var(--text-muted); }
     .opt-panel { background: var(--bg-color); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 0.75rem; line-height: 1.4; }
     .opt-head { display: flex; gap: 10px; align-items: center; }
     .opt-score { font-size: 1.7rem; font-weight: 800; color: var(--accent-color); min-width: 50px; text-align: center; }
@@ -368,7 +374,7 @@
           <div><div class="lbl">Result</div><div class="val" id="tr-out-result">-</div></div>
         </div>
         <div class="traj-advice" id="tr-advice"></div>
-        <button class="btn btn-success" id="tr-recommend" style="width: 100%; margin-top: 8px;" onclick="applyRecommendedLine()">Apply Recommended Line</button>
+        <div id="tr-fixes"></div>
         <button class="btn" id="tr-optimal-btn" style="width: 100%; margin-top: 8px;" onclick="findOptimalTrajectory()">Find Optimal Trajectory</button>
         <div class="opt-panel" id="tr-optimal" style="display: none;"></div>
 
@@ -546,7 +552,7 @@
             <li><b>2-and-1:</b> feet move 2 for every 1 with your eyes. Changes the angle as well as the position: use it when the lane changes, not for one bad shot.</li>
             <li><b>One change at a time,</b> then give it two good shots before judging it.</li>
             <li><b>Not just feet:</b> ball change, speed ±0.5 mph (faster = later hook), or less rotation in the hand (straighter).</li>
-            <li>Unsure? Put your line in <b>Trajectory</b> and tap <b>Apply Recommended Line</b>, or <b>Find Optimal Trajectory</b> for the best strike line in the current conditions.</li>
+            <li>Unsure? Put your line in <b>Trajectory</b> and tap a correction, or <b>Find Optimal Trajectory</b> for the best strike line in the current conditions.</li>
           </ul>
         </div>
       </details>
@@ -699,7 +705,8 @@
         <dt>Entry angle</dt><dd>Angle into the pocket. About 4–6° carries best.</dd>
         <dt>Roll point</dt><dd>Where the ball stops sliding and rolls. Too early means it runs out of energy.</dd>
         <dt>Skid / Hook / Roll</dt><dd>Path colours: sliding through oil, turning on the dry, then rolling straight into the pins.</dd>
-        <dt>Recommended Line</dt><dd>The smallest move (eyes, feet or 2-and-1) that gets your current line to the pocket.</dd>
+        <dt>Strike score</dt><dd>0–100 rating of a line's strike chance: pocket, entry angle, miss room, roll timing and exit board.</dd>
+        <dt>Corrections</dt><dd>When your line misses the pocket: keep the foul line and move your eyes, keep the arrows and move your feet, or a 2-and-1 move. Each shows its strike score; ★ marks the best. Tap one to apply it.</dd>
         <dt>Optimal Trajectory</dt><dd>Searches every line for the best <b>strike score</b> (0–100): pocket, entry angle, miss room, roll timing and exit board.</dd>
       </dl>
 
@@ -1486,41 +1493,64 @@
       return best ? best.v : null;
     }
 
-    let recommendedLine = null;
+    // Corrections to the entered line: keep the foul line and move the target at the arrows,
+    // keep the arrows and move the foul line, or a 2-and-1 move. Each is scored, and the
+    // highest strike score is marked as recommended.
+    let lineFixes = [];
 
-    // Lists the eyes-only, feet-only and 2-and-1 moves that reach the pocket, and keeps the
-    // smallest as the recommended line.
-    function pocketAdvice(p, result) {
-      recommendedLine = null;
-      if (result === 'Pocket') return 'On target: this line carries into the pocket.';
+    function findLineFixes(p) {
       const side = n => `${Math.abs(n)} board${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'left' : 'right'}`;
-      const options = [];
+      const fixes = [];
+      const add = (title, laydown, arrow, detail) => {
+        fixes.push({ title, laydown, arrow, detail, score: strikeScore({ ...p, laydown, arrow }).score });
+      };
       const arrow = solveForPocket(1, 39, p.arrow, v => ({ ...p, arrow: v }));
       if (arrow !== null && arrow !== p.arrow) {
-        options.push({ laydown: p.laydown, arrow, move: Math.abs(arrow - p.arrow),
-          text: `same laydown, target <b>${arrow}</b> at the arrows (eyes ${side(arrow - p.arrow)})` });
+        add(`Keep foul line ${p.laydown}`, p.laydown, arrow, `${p.laydown} → <b>${arrow}</b> at the arrows (eyes ${side(arrow - p.arrow)})`);
       }
       const laydown = solveForPocket(1, 39, p.laydown, v => ({ ...p, laydown: v }));
       if (laydown !== null && laydown !== p.laydown) {
-        options.push({ laydown, arrow: p.arrow, move: Math.abs(laydown - p.laydown),
-          text: `same target, lay the ball down on <b>${laydown}</b> (feet ${side(laydown - p.laydown)})` });
+        add(`Keep arrows ${p.arrow}`, laydown, p.arrow, `<b>${laydown}</b> → ${p.arrow} at the foul line (feet ${side(laydown - p.laydown)})`);
       }
       // 2-and-1 move: feet two boards for every board the eyes move, same direction.
       const dLo = Math.max((1 - p.laydown) / 2, 1 - p.arrow), dHi = Math.min((39 - p.laydown) / 2, 39 - p.arrow);
       const d = solveForPocket(Math.ceil(dLo * 2) / 2, Math.floor(dHi * 2) / 2, 0, v => ({ ...p, laydown: p.laydown + 2 * v, arrow: p.arrow + v }));
       if (d !== null && d !== 0) {
-        options.push({ laydown: p.laydown + 2 * d, arrow: p.arrow + d, move: Math.abs(2 * d) + 0.5,
-          text: `2-and-1 move: feet ${side(2 * d)}, eyes ${side(d)} (laydown <b>${p.laydown + 2 * d}</b>, arrows <b>${p.arrow + d}</b>)` });
+        add('2-and-1 move', p.laydown + 2 * d, p.arrow + d, `<b>${p.laydown + 2 * d}</b> → <b>${p.arrow + d}</b> (feet ${side(2 * d)}, eyes ${side(d)})`);
       }
-      if (!options.length) return 'No simple line adjustment reaches the pocket with this release.';
-      recommendedLine = options.reduce((best, o) => o.move < best.move ? o : best);
-      return `To reach the pocket (${POCKET_BOARD}): ${options.map(o => o.text).join(', or ')}.`;
+      const best = fixes.reduce((a, b) => (!a || b.score > a.score ? b : a), null);
+      fixes.forEach(fx => { fx.best = fx === best; });
+      return fixes;
     }
 
-    window.applyRecommendedLine = function() {
-      if (!recommendedLine) return;
-      document.getElementById('tr-laydown').value = recommendedLine.laydown;
-      document.getElementById('tr-arrow').value = recommendedLine.arrow;
+    const STRIKE_PART_NAMES = { pocket: 'pocket', entry: 'entry angle', room: 'miss room', phase: 'roll timing', breakpoint: 'exit board' };
+
+    function renderLineFixes(p, result) {
+      const current = strikeScore(p);
+      const weakest = current.parts
+        ? Object.keys(current.parts).reduce((a, b) => (current.parts[b] < current.parts[a] ? b : a))
+        : null;
+      const scoreLine = `Strike score for this line: <b>${pct(current.score)}</b>/100` +
+        (weakest ? ` <span class="muted">(weakest: ${STRIKE_PART_NAMES[weakest]})</span>` : '');
+      lineFixes = result === 'Pocket' ? [] : findLineFixes(p);
+      const status = result === 'Pocket'
+        ? 'On target: this line carries into the pocket. Use Find Optimal Trajectory to look for a higher score.'
+        : lineFixes.length
+          ? `To reach the pocket (${POCKET_BOARD}), pick a correction:`
+          : 'No simple correction reaches the pocket with this release. Try Find Optimal Trajectory.';
+      document.getElementById('tr-advice').innerHTML = `<div>${scoreLine}</div><div style="margin-top: 4px;">${status}</div>`;
+      document.getElementById('tr-fixes').innerHTML = lineFixes.map((fx, i) => `
+        <button type="button" class="fix-btn${fx.best ? ' best' : ''}" onclick="applyLineFix(${i})">
+          <span><b>${fx.title}</b>${fx.best ? ' <span class="fix-tag">★ Recommended</span>' : ''}<br>${fx.detail}</span>
+          <span class="fix-score">${pct(fx.score)}</span>
+        </button>`).join('');
+    }
+
+    window.applyLineFix = function(i) {
+      const fx = lineFixes[i];
+      if (!fx) return;
+      document.getElementById('tr-laydown').value = fx.laydown;
+      document.getElementById('tr-arrow').value = fx.arrow;
       onTrajInput();
     };
 
@@ -1738,12 +1768,7 @@
       const resultEl = document.getElementById('tr-out-result');
       resultEl.textContent = result;
       resultEl.style.color = result === 'Pocket' ? 'var(--success-color)' : (result === 'High' || result === 'Light') ? 'var(--warning-color)' : 'var(--danger-color)';
-      document.getElementById('tr-advice').innerHTML = pocketAdvice(p, result);
-      const recBtn = document.getElementById('tr-recommend');
-      recBtn.disabled = !recommendedLine;
-      recBtn.textContent = recommendedLine
-        ? `Apply Recommended Line (${recommendedLine.laydown} → ${recommendedLine.arrow})`
-        : result === 'Pocket' ? 'In the Pocket' : 'No Recommendation';
+      renderLineFixes(p, result);
       // The optimal-line result only holds while the ball, release and lane stay the same.
       if (optimalKey !== null && optimalKey !== conditionsKey(p)) {
         optimalKey = null;
