@@ -47,7 +47,7 @@
     .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 
     .top-nav { display: flex; gap: 4px; margin-bottom: 14px; background-color: var(--card-bg); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); }
-    .nav-btn { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 6px; }
+    .nav-btn { flex: 1; text-align: center; padding: 8px 2px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 6px; }
     .nav-btn.active { background-color: var(--accent-color); color: #0f172a; }
 
     .view-panel { display: none; }
@@ -121,11 +121,27 @@
     .canvas-container { width: 100%; margin-top: 8px; }
     canvas { display: block; margin: 0 auto; border-radius: 6px; border: 1px solid var(--border-color); }
 
-    #guide-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 16px; overflow-y: auto; }
-    .modal-content { background: var(--card-bg); border-radius: 8px; padding: 16px; max-width: 600px; margin: 0 auto; border: 1px solid var(--border-color); }
-    .guide-section { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-    .guide-section h3 { font-size: 0.85rem; color: var(--accent-color); margin-bottom: 4px; }
-    .guide-section p, .guide-section li { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+    .plan details { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; }
+    .plan summary { padding: 11px 12px; font-size: 0.9rem; font-weight: 600; color: var(--accent-color); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .plan summary::-webkit-details-marker { display: none; }
+    .plan summary::after { content: '+'; color: var(--text-muted); font-size: 1.1rem; }
+    .plan details[open] summary::after { content: '–'; }
+    .plan .body { padding: 0 12px 12px; font-size: 0.8rem; line-height: 1.45; }
+    .plan .body p { margin-bottom: 8px; }
+    .plan ul { padding-left: 18px; margin-bottom: 8px; }
+    .plan li { margin-bottom: 5px; }
+    .plan h4 { font-size: 0.8rem; color: var(--text-main); margin: 10px 0 4px; }
+    .plan h4:first-child { margin-top: 0; }
+    .plan table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-bottom: 8px; }
+    .plan th, .plan td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+    .plan th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.6rem; }
+    .plan .muted, .plan-note { color: var(--text-muted); font-size: 0.7rem; }
+    .plan .go-left { color: var(--success-color); font-weight: 700; }
+    .plan .go-right { color: var(--warning-color); font-weight: 700; }
+    .plan-profile { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+    .plan-profile div { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 4px; text-align: center; }
+    .plan-profile span { display: block; font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+    .plan-profile b { font-size: 0.85rem; color: var(--accent-color); }
   </style>
 </head>
 <body>
@@ -133,7 +149,7 @@
   <div class="app-container">
     <header>
       <h1>Bowling Log & Strategy</h1>
-      <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Game Plan</button>
+      <button class="btn btn-secondary btn-sm" onclick="switchView('plan')">Game Plan</button>
     </header>
 
     <div class="top-nav">
@@ -141,6 +157,7 @@
       <div class="nav-btn" onclick="switchView('traj')">Trajectory</div>
       <div class="nav-btn" onclick="switchView('stats')">Analytics</div>
       <div class="nav-btn" onclick="switchView('hist')">History</div>
+      <div class="nav-btn" onclick="switchView('plan')">Plan</div>
     </div>
 
     <!-- LOG VIEW -->
@@ -395,24 +412,144 @@
       </div>
     </div>
 
-    <!-- GAME PLAN MODAL -->
-    <div id="guide-modal">
-      <div class="modal-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h2 style="font-size: 1rem; color: var(--accent-color);">5-Game Execution Plan</h2>
-          <button class="btn btn-secondary btn-sm" onclick="toggleGuide()">Close</button>
-        </div>
-        <div class="guide-section">
-          <h3>Baseline Setup</h3>
-          <p><strong>Profile:</strong> 16.5 mph | 410 RPM | 10° Tilt | 45° Rotation</p>
-          <p><strong>Fresh Baseline:</strong> Viking Conquest (28-10-7)</p>
-        </div>
-        <div class="guide-section">
-          <h3>Transition Trigger</h3>
-          <p>Switch to <strong>Zen Soul (30-15-8)</strong> when Viking exhibits 3-6 pin deflection (early roll-out).</p>
-        </div>
+    <!-- GAME PLAN VIEW -->
+    <div id="view-plan" class="view-panel plan">
+      <div class="plan-profile">
+        <div><span>Speed</span><b>16.5 mph</b></div>
+        <div><span>Revs</span><b>410 rpm</b></div>
+        <div><span>Rotation</span><b>45°</b></div>
+        <div><span>Tilt</span><b>10°</b></div>
       </div>
+
+      <details open>
+        <summary>Quick Fixes: Read the Hit</summary>
+        <div class="body">
+          <table>
+            <thead><tr><th>You see</th><th>Why</th><th>Do this</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>High / Brooklyn</b><br>Crosses the head pin; 4-pin, 4-9, 4-6 / 4-6-7-10 splits</td>
+                <td>Fronts dried up, ball hooks too early</td>
+                <td><span class="go-left">Move LEFT</span> 2-and-1 (feet 2, eyes 1). Still high → Zen Soul or a touch more speed.</td>
+              </tr>
+              <tr>
+                <td><b>Light / skids past</b><br>Ball stays right; 6-10, 3-6-10, 10-pin, 3-10</td>
+                <td>Too much oil (fresh or carrydown), ball can't turn</td>
+                <td><span class="go-right">Move RIGHT</span> 1-and-1 (feet 1, eyes 1). Still light → stronger ball (Viking, then Lock) or slow down 0.5 mph.</td>
+              </tr>
+              <tr>
+                <td><b>Weak pocket hit</b><br>Flat 10, 8-10, 5-pin, 5-7</td>
+                <td>Ball rolled out early and has no energy left at the pins</td>
+                <td><span class="go-left">Move LEFT</span> 1-and-1 into more oil, or switch to Zen Soul, or add 0.5 mph.</td>
+              </tr>
+              <tr>
+                <td><b>Ringing 10</b><br>Good-looking pocket hit, 10 stands</td>
+                <td>Usually just carry, not a bad shot</td>
+                <td>Don't move after one. Twice in a row → small speed change (±0.5 mph).</td>
+              </tr>
+              <tr>
+                <td><b>Misses all over</b><br>Left one shot, right the next</td>
+                <td>Execution, not the lane</td>
+                <td><b>Don't move.</b> Hit your target, keep tempo and speed the same.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Adjustment Rules</summary>
+        <div class="body">
+          <ul>
+            <li><b>Follow the miss.</b> Ball finishes left of the pocket → move feet and eyes left. Finishes right → move right.</li>
+            <li><b>1-and-1 (parallel):</b> feet and eyes move the same number of boards. Same angle, for small misses (1–2 boards at the pins).</li>
+            <li><b>2-and-1:</b> feet move 2 for every 1 with your eyes. Changes the angle as well as the position: use it when the lane changes, not for one bad shot.</li>
+            <li><b>One change at a time,</b> then give it two good shots before judging it.</li>
+            <li><b>Not just feet:</b> ball change, speed ±0.5 mph (faster = later hook), or less rotation in the hand (straighter).</li>
+            <li>Unsure? Put your line in <b>Trajectory</b> and tap <b>Apply Recommended Line</b>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>Starting Lines (Fresh Oil)</summary>
+        <div class="body">
+          <table>
+            <thead><tr><th>Ball</th><th>Foul Line</th><th>Eyes</th><th>Breakpoint</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Viking Conquest</b><br>Game 1, fresh</td>
+                <td>28</td><td>15</td><td>8–10</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="showLineOnLane('viking', 28, 15)">Lane</button></td>
+              </tr>
+              <tr>
+                <td><b>Zen Soul</b><br>Transition</td>
+                <td>30</td><td>15</td><td>~8</td>
+                <td><button class="btn btn-secondary btn-sm" onclick="showLineOnLane('zen', 30, 15)">Lane</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="plan-note">All lines are the board the ball crosses at the foul line, the same mark the Trajectory tab uses. Set your feet from there.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>League Night: Game by Game</summary>
+        <div class="body">
+          <h4>Game 1: Fresh oil · Viking Conquest</h4>
+          <ul>
+            <li>Start at 28 at the foul line, eyes 15. Keep speed at 16.5 mph and the release relaxed.</li>
+            <li>Pocket → stay put. Use the first 2–3 frames to learn the lane, not to chase it.</li>
+            <li>As the track dries, the ball starts hooking earlier and hitting high. Move <b>left</b>, usually 2-and-1, to stay ahead of it.</li>
+          </ul>
+          <h4>Game 2: Transition · switch to Zen Soul</h4>
+          <ul>
+            <li><b>Trigger:</b> the Viking hooks early and dies. Weak hits (flat 10, 8-10, 5-7), or high hits even after moving left.</li>
+            <li>Don't force the solid by throwing it farther right or lofting it. <b>Put it away.</b></li>
+            <li>Start the Zen Soul at 30 at the foul line, eyes 15. Throw one good shot, then follow the miss. Don't stack a ball change and a big move before seeing a shot.</li>
+          </ul>
+          <h4>Game 3: Late night · two things can happen</h4>
+          <ul>
+            <li><b>Fronts keep drying</b> (ball still hooks early / high) → keep moving <b>left and deeper</b> with 2-and-1 moves.</li>
+            <li><b>Carrydown</b> (oil pushed down the lane: ball skids long, hits light, won't come back) → move <b>right</b> 1-and-1, or go back to a stronger ball (Viking, or Storm Lock if it's really slick), or slow down slightly.</li>
+            <li>Tell them apart by where the ball goes <i>wrong</i>: early and high = dry; late and light = carrydown.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>Arsenal</summary>
+        <div class="body">
+          <table>
+            <thead><tr><th>Ball</th><th>Role</th><th>Use when</th></tr></thead>
+            <tbody>
+              <tr><td><b>900 Global Viking Conquest</b><br><span class="muted">Solid · 2000 Abralon · RG 2.51 / 0.052</span></td><td>Benchmark</td><td>Fresh oil. Reads early, smooth and predictable.</td></tr>
+              <tr><td><b>900 Global Zen Soul</b><br><span class="muted">Hybrid · 4000 Abralon · RG 2.49 / 0.051</span></td><td>Transition</td><td>Fronts burned. Cleaner through the heads, quicker off the dry.</td></tr>
+              <tr><td><b>Storm Lock</b><br><span class="muted">Hybrid · 3000 Abralon · RG 2.48 / 0.054</span></td><td>Heavy oil</td><td>Long or heavy patterns, or carrydown when the Viking skids.</td></tr>
+              <tr><td><b>Brunswick TZone</b><br><span class="muted">Polyester · high gloss</span></td><td>Spares</td><td>Single pins and corner pins. Goes straight.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Spare System (TZone)</summary>
+        <div class="body">
+          <p><b>Eyes always on the center arrow (board 20). Only your mark at the foul line moves.</b> Flat hand, no rotation, walk straight to your target.</p>
+          <table>
+            <thead><tr><th>Pin</th><th>Foul Line</th><th>Eyes</th></tr></thead>
+            <tbody id="plan-spares"></tbody>
+          </table>
+          <ul>
+            <li><b>Multi-pin leaves:</b> line up for the pin closest to you, e.g. 3-6-10 → shoot the 3-pin line nudged half a board toward the 6, or switch to your strike ball for big clusters.</li>
+            <li><b>Corner pins (7, 10):</b> trust the cross-lane angle. Most misses come from drifting or turning the hand, not the line.</li>
+            <li>Splits: take the sure pin unless the pins are side by side.</li>
+          </ul>
+          <p class="plan-note">Straight lines from the foul-line board through board 20 at the arrows to each pin.</p>
+        </div>
+      </details>
     </div>
+
   </div>
 
   <script>
@@ -622,7 +759,7 @@
 
     // ---------- Navigation ----------
     window.switchView = function(viewKey) {
-      const keys = ['log', 'traj', 'stats', 'hist'];
+      const keys = ['log', 'traj', 'stats', 'hist', 'plan'];
       document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
         btn.classList.toggle('active', keys[idx] === viewKey);
       });
@@ -632,6 +769,7 @@
       if (viewKey === 'traj') drawLane();
       if (viewKey === 'stats') calcAnalytics();
       if (viewKey === 'hist') renderHistory();
+      if (viewKey === 'plan') renderPlan();
     };
 
     window.switchGame = function(g) {
@@ -1530,9 +1668,27 @@
       }
     };
 
-    window.toggleGuide = function() {
-      const m = document.getElementById('guide-modal');
-      m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    // ---------- Game plan ----------
+    // Straight spare lines through board 20 at the arrows, grouped by pins that share a line.
+    function renderPlan() {
+      const eyes = 20, eyesDist = arrowDistIn(eyes);
+      const groups = [[7], [4], [2, 8], [1, 5], [3, 9], [6], [10]];
+      document.getElementById('plan-spares').innerHTML = groups.map(group => {
+        const pin = PINS.find(p => p.id === group[0]);
+        const pinBoard = 0.5 + (LANE.widthIn / 2 - pin.dx) / LANE.boardIn;
+        const pinY = LANE.headPinIn + pin.row * ROW_IN;
+        const laydown = Math.round((eyes - pinBoard * eyesDist / pinY) / (1 - eyesDist / pinY) * 2) / 2;
+        return `<tr><td><b>${group.join(' / ')}</b></td><td>${laydown}</td><td>${eyes}</td></tr>`;
+      }).join('');
+    }
+
+    window.showLineOnLane = function(ball, laydown, arrow) {
+      document.getElementById('tr-ball').value = ball;
+      document.getElementById('tr-laydown').value = laydown;
+      document.getElementById('tr-arrow').value = arrow;
+      onTrajInput();
+      window.switchView('traj');
+      window.scrollTo(0, 0);
     };
 
     window.exportCSV = function() {
