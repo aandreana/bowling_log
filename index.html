@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bowling Log & Strategy</title>
+  <title>Pro-Dynamic Bowling Log & Strategy Studio</title>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -20,12 +20,12 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    body { 
-      background-color: var(--bg-color); 
-      color: var(--text-main); 
-      padding: 12px; 
-      padding-bottom: 80px; 
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 12px;
+      padding-bottom: 80px;
       display: flex;
       justify-content: center;
     }
@@ -56,11 +56,14 @@
     .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; color: var(--accent-color); display: flex; justify-content: space-between; align-items: center; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 
     .form-group { margin-bottom: 8px; }
     label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; }
     input, select, textarea { width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 7px; border-radius: 4px; font-size: 0.85rem; }
+    select:disabled { opacity: 0.35; }
+    input[type="range"] { padding: 0; }
 
     .game-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; overflow-x: auto; }
     .g-tab { flex: 1; min-width: 60px; text-align: center; padding: 6px 0; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
@@ -83,25 +86,17 @@
     .stat-card .num { font-size: 1.4rem; font-weight: 700; color: var(--accent-color); margin: 4px 0; }
     .stat-card .desc { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
 
+    .traj-readouts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
+    .traj-readouts div { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 4px; text-align: center; }
+    .traj-readouts .lbl { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+    .traj-readouts .val { font-size: 0.9rem; font-weight: 700; color: var(--accent-color); }
+
     .history-item { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
     .history-info h4 { font-size: 0.85rem; color: var(--text-main); }
     .history-info p { font-size: 0.75rem; color: var(--text-muted); }
 
-    .canvas-container {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      margin-top: 8px;
-    }
-
-    canvas { 
-      width: 100%; 
-      max-width: 400px;
-      height: auto; 
-      background-color: #080d1a; 
-      border-radius: 6px; 
-      border: 1px solid var(--border-color); 
-    }
+    .canvas-container { width: 100%; margin-top: 8px; }
+    canvas { display: block; margin: 0 auto; border-radius: 6px; border: 1px solid var(--border-color); }
 
     #guide-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 16px; overflow-y: auto; }
     .modal-content { background: var(--card-bg); border-radius: 8px; padding: 16px; max-width: 600px; margin: 0 auto; border: 1px solid var(--border-color); }
@@ -179,48 +174,62 @@
       </div>
     </div>
 
-    <!-- TRAJECTORY VISUALIZER VIEW -->
+    <!-- TRAJECTORY STUDIO VIEW -->
     <div id="view-traj" class="view-panel">
       <div class="card">
-        <div class="card-title">USBC Scaled Trajectory Simulator</div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Regulation 60' Lane Bed, 39 Boards (1.063" width), Gutters & Pin Deck Geometry.</p>
+        <div class="card-title">Pro-Dynamic Bowling Trajectory Studio</div>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">Right-handed view from the approach (board 1 on the right). Lane length is compressed to fit the screen; widths, pins and ball are to scale.</p>
 
         <div style="margin-bottom: 10px;">
-          <label>Trajectory Curve Mode</label>
-          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-            <button id="mode-physics" class="btn btn-sm" onclick="setMode('physics')">4-Phase Physics Vector</button>
-            <button id="mode-smooth" class="btn btn-secondary btn-sm" onclick="setMode('smooth')">Smooth Continuous Arch</button>
-          </div>
-
-          <label>Tactical Presets</label>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(28, 10, 7)">Viking (28-10-7)</button>
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 15, 8)">Zen (30-15-8)</button>
-            <button class="btn btn-secondary btn-sm" onclick="setPreset(32, 17, 9)">Deep (32-17-9)</button>
+          <label>Tactical Presets (laydown · arrow · breakpoint)</label>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(25, 10, 13, 7, 40, 17.5)">Standard (25-10-7)</button>
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(20, 15, 14, 10, 40, 17.5)">Inside (20-15-10)</button>
+            <button class="btn btn-secondary btn-sm" onclick="setPreset(30, 8, 13, 4, 42, 17.5)">Deep (30-8-4)</button>
           </div>
         </div>
 
-        <div class="grid-4">
+        <div class="grid-3">
           <div class="form-group">
-            <label>Laydown</label>
-            <input type="number" id="tr-laydown" value="28" min="1" max="39" oninput="drawLane()" />
+            <label>Laydown Board</label>
+            <input type="number" id="tr-laydown" value="25" min="1" max="39" step="0.5" oninput="drawLane()" />
           </div>
           <div class="form-group">
-            <label>Arrow (15')</label>
-            <input type="number" id="tr-arrow" value="10" min="1" max="39" oninput="drawLane()" />
+            <label>Arrow Board</label>
+            <input type="number" id="tr-arrow" value="10" min="1" max="39" step="0.5" oninput="drawLane()" />
           </div>
           <div class="form-group">
-            <label>Break (40')</label>
-            <input type="number" id="tr-break" value="7" min="1" max="39" oninput="drawLane()" />
+            <label>Arrow Dist (ft)</label>
+            <input type="number" id="tr-dist" value="13" min="10" max="20" step="1" oninput="drawLane()" />
           </div>
           <div class="form-group">
-            <label>Pocket (60')</label>
-            <input type="number" id="tr-pocket" value="17.5" step="0.5" min="1" max="39" oninput="drawLane()" />
+            <label>Breakpoint Board</label>
+            <input type="number" id="tr-bp-board" value="7" min="1" max="39" step="0.5" oninput="drawLane()" />
           </div>
+          <div class="form-group">
+            <label>Breakpoint Dist (ft)</label>
+            <input type="number" id="tr-bp-dist" value="40" min="25" max="55" step="1" oninput="drawLane()" />
+          </div>
+          <div class="form-group">
+            <label>Pocket Board</label>
+            <input type="number" id="tr-pocket" value="17.5" min="1" max="39" step="0.5" oninput="drawLane()" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 4px;">
+          <label style="display: flex; justify-content: space-between;"><span>Back-End Shape</span><span>Arc ◂ ▸ Skid / Flip</span></label>
+          <input type="range" id="tr-sharp" min="0" max="1" step="0.05" value="0.4" oninput="drawLane()" />
+        </div>
+
+        <div class="traj-readouts">
+          <div><div class="lbl">Launch</div><div class="val" id="tr-out-launch">-</div></div>
+          <div><div class="lbl">Breakpoint</div><div class="val" id="tr-out-bp">-</div></div>
+          <div><div class="lbl">Hook</div><div class="val" id="tr-out-hook">-</div></div>
+          <div><div class="lbl">Entry Angle</div><div class="val" id="tr-out-entry">-</div></div>
         </div>
 
         <div class="canvas-container">
-          <canvas id="laneCanvas" width="480" height="960"></canvas>
+          <canvas id="laneCanvas"></canvas>
         </div>
       </div>
     </div>
@@ -271,43 +280,267 @@
           <h3>Transition Trigger</h3>
           <p>Switch to <strong>Zen Soul (30-15-8)</strong> when Viking exhibits 3-6 pin deflection (early roll-out).</p>
         </div>
-        <div class="guide-section">
-          <h3>Deep Adjustments</h3>
-          <p>Apply <strong>2-to-1 rule</strong> (move feet 2, eyes 1) to open angles as oil breaks down.</p>
-        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // ---------- Session data ----------
+    // Ball values: '' = not bowled yet, '-' = gutter/miss (0), '1'-'9', 'X' = strike, '/' = spare.
+    const DATA_VERSION = 2;
+    const GAME_COUNT = 5;
     let activeGame = 1;
-    let trajMode = 'physics';
-    let sessionData = { id: Date.now(), date: new Date().toISOString().split('T')[0], center: '', notes: '', games: {} };
+    let sessionData = newSession();
 
-    for (let g = 1; g <= 5; g++) {
-      sessionData.games[g] = { frames: {} };
-      for (let f = 1; f <= 10; f++) {
-        sessionData.games[g].frames[f] = { b1: '', b2: '', b3: '', line: '', note: '' };
+    function todayLocal() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().split('T')[0];
+    }
+
+    function blankFrame() {
+      return { b1: '', b2: '', b3: '', line: '', note: '' };
+    }
+
+    function newSession() {
+      const s = { v: DATA_VERSION, id: Date.now(), date: todayLocal(), center: '', notes: '', games: {} };
+      for (let g = 1; g <= GAME_COUNT; g++) {
+        s.games[g] = { frames: {} };
+        for (let f = 1; f <= 10; f++) s.games[g].frames[f] = blankFrame();
+      }
+      return s;
+    }
+
+    // Brings sessions saved by older versions of the app up to the current format.
+    // Older versions used '-' both for "not bowled" and "gutter", so a frame with
+    // nothing but '-' in it is treated as not bowled.
+    function normalizeSession(s) {
+      const legacy = !s.v;
+      s.games = s.games || {};
+      for (let g = 1; g <= GAME_COUNT; g++) {
+        s.games[g] = s.games[g] || { frames: {} };
+        const frames = s.games[g].frames = s.games[g].frames || {};
+        for (let f = 1; f <= 10; f++) {
+          const fr = Object.assign(blankFrame(), frames[f] || {});
+          ['b1', 'b2', 'b3'].forEach(k => {
+            if (fr[k] == null) fr[k] = '';
+            if (fr[k] === '10') fr[k] = 'X';
+          });
+          if (legacy && ['b1', 'b2', 'b3'].every(k => fr[k] === '' || fr[k] === '-')) {
+            fr.b1 = fr.b2 = fr.b3 = '';
+          }
+          sanitizeFrame(fr, f);
+          frames[f] = fr;
+        }
+      }
+      s.v = DATA_VERSION;
+      return s;
+    }
+
+    function readJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        return fallback;
       }
     }
 
+    function writeJSON(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+    }
+
+    function getHistory() {
+      return readJSON('bowling_history', []).map(normalizeSession);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---------- Scoring ----------
+    // Pins knocked down by one ball. prevPins = pins already down in the same rack.
+    function ballPins(sym, prevPins) {
+      if (sym === 'X') return 10;
+      if (sym === '/') return 10 - prevPins;
+      if (sym === '-') return 0;
+      return parseInt(sym, 10) || 0;
+    }
+
+    // Numeric rolls entered for a frame, in order, stopping at the first blank ball.
+    function frameRolls(fr, f) {
+      const out = [];
+      if (fr.b1 === '') return out;
+      const r1 = ballPins(fr.b1, 0);
+      out.push(r1);
+      if (f < 10) {
+        if (r1 !== 10 && fr.b2 !== '') out.push(ballPins(fr.b2, r1));
+        return out;
+      }
+      if (fr.b2 === '') return out;
+      const r2 = ballPins(fr.b2, r1 === 10 ? 0 : r1);
+      out.push(r2);
+      if (fr.b3 === '') return out;
+      const freshRack = (r1 === 10 && r2 === 10) || (r1 < 10 && r1 + r2 === 10);
+      out.push(ballPins(fr.b3, freshRack ? 0 : r2));
+      return out;
+    }
+
+    function frameComplete(fr, f) {
+      const r = frameRolls(fr, f);
+      if (f < 10) return r[0] === 10 || r.length === 2;
+      if (r.length < 2) return false;
+      const earnsBonusBall = r[0] === 10 || r[0] + r[1] === 10;
+      return earnsBonusBall ? r.length === 3 : true;
+    }
+
+    // The next n rolls after frame f, as far as they have been bowled.
+    function nextRolls(frames, f, n) {
+      const out = [];
+      for (let k = f + 1; k <= 10 && out.length < n; k++) {
+        for (const v of frameRolls(frames[k], k)) {
+          if (out.length < n) out.push(v);
+        }
+        if (!frameComplete(frames[k], k)) break;
+      }
+      return out;
+    }
+
+    // Returns the cumulative score after each frame (null once a frame can't be scored yet)
+    // and the total of every frame that can be scored.
+    function scoreFrames(frames) {
+      const cum = [];
+      let total = 0;
+      let blocked = false;
+      for (let f = 1; f <= 10; f++) {
+        const fr = frames[f];
+        if (blocked || !frameComplete(fr, f)) { blocked = true; cum.push(null); continue; }
+        const r = frameRolls(fr, f);
+        let s = r.reduce((a, b) => a + b, 0);
+        if (f < 10) {
+          const strike = r[0] === 10;
+          const spare = !strike && r[0] + r[1] === 10;
+          const need = strike ? 2 : spare ? 1 : 0;
+          if (need) {
+            const bonus = nextRolls(frames, f, need);
+            if (bonus.length < need) { blocked = true; cum.push(null); continue; }
+            s += bonus.reduce((a, b) => a + b, 0);
+          }
+        }
+        total += s;
+        cum.push(total);
+      }
+      return { cum, total };
+    }
+
+    // Copy of the game with every ball not yet bowled filled in with the best result possible.
+    function bestCaseFrames(frames) {
+      const out = {};
+      for (let f = 1; f <= 10; f++) {
+        const fr = Object.assign({}, frames[f]);
+        if (fr.b1 === '') fr.b1 = 'X';
+        if (f < 10) {
+          if (fr.b1 !== 'X' && fr.b2 === '') fr.b2 = '/';
+        } else {
+          if (fr.b2 === '') fr.b2 = fr.b1 === 'X' ? 'X' : '/';
+          const earnsBonusBall = fr.b1 === 'X' || fr.b2 === '/';
+          if (earnsBonusBall && fr.b3 === '') fr.b3 = (fr.b2 === 'X' || fr.b2 === '/') ? 'X' : '/';
+        }
+        out[f] = fr;
+      }
+      return out;
+    }
+
+    // Legal choices for a ball, or null when that ball can't be bowled (yet).
+    function legalBalls(fr, f, key) {
+      const counts = n => {
+        const arr = [];
+        for (let i = n; i >= 1; i--) arr.push(String(i));
+        arr.push('-');
+        return arr;
+      };
+      if (key === 'b1') return ['X', ...counts(9)];
+      if (fr.b1 === '') return null;
+      const p1 = ballPins(fr.b1, 0);
+      if (key === 'b2') {
+        if (p1 === 10) return f < 10 ? null : ['X', ...counts(9)];
+        return ['/', ...counts(9 - p1)];
+      }
+      if (f < 10 || fr.b2 === '') return null;
+      if (p1 === 10) {
+        if (fr.b2 === 'X') return ['X', ...counts(9)];
+        return ['/', ...counts(9 - ballPins(fr.b2, 0))];
+      }
+      if (fr.b2 === '/') return ['X', ...counts(9)];
+      return null;
+    }
+
+    // Clears any ball that is no longer legal (e.g. after changing an earlier ball).
+    function sanitizeFrame(fr, f) {
+      ['b1', 'b2', 'b3'].forEach(k => {
+        const legal = legalBalls(fr, f, k);
+        if (!legal || (fr[k] !== '' && !legal.includes(fr[k]))) fr[k] = '';
+      });
+    }
+
+    // ---------- Navigation ----------
+    window.switchView = function(viewKey) {
+      const keys = ['log', 'traj', 'stats', 'hist'];
+      document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', keys[idx] === viewKey);
+      });
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      const activePanel = document.getElementById(`view-${viewKey}`);
+      if (activePanel) activePanel.classList.add('active');
+      if (viewKey === 'traj') drawLane();
+      if (viewKey === 'stats') calcAnalytics();
+      if (viewKey === 'hist') renderHistory();
+    };
+
+    window.switchGame = function(g) {
+      activeGame = g;
+      document.querySelectorAll('.g-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === g));
+      for (let i = 1; i <= GAME_COUNT; i++) {
+        const el = document.getElementById(`game-view-${i}`);
+        if (el) el.style.display = i === g ? 'block' : 'none';
+      }
+      recalcScores();
+    };
+
+    function fillSessionFields() {
+      document.getElementById('session-date').value = sessionData.date || '';
+      document.getElementById('session-center').value = sessionData.center || '';
+      document.getElementById('session-notes').value = sessionData.notes || '';
+    }
+
     function init() {
-      document.getElementById('session-date').value = sessionData.date;
       loadCurrentSession();
+      fillSessionFields();
       renderGames();
-      switchGame(1);
-      drawLane();
+      window.switchGame(1);
       calcAnalytics();
       renderHistory();
     }
 
+    // ---------- Log view ----------
+    function ballSelect(g, f, key, fr) {
+      const legal = legalBalls(fr, f, key);
+      const placeholder = { b1: 'Ball 1', b2: 'Ball 2', b3: 'Ball 3' }[key];
+      let opts = `<option value="">${placeholder}</option>`;
+      (legal || []).forEach(v => {
+        opts += `<option value="${v}"${fr[key] === v ? ' selected' : ''}>${v}</option>`;
+      });
+      return `<select aria-label="Frame ${f} ${placeholder}" onchange="updateShot(${g}, ${f}, '${key}', this.value)"${legal ? '' : ' disabled'}>${opts}</select>`;
+    }
+
     function renderGames() {
       const container = document.getElementById('game-views');
+      if (!container) return;
       container.innerHTML = '';
-      for (let g = 1; g <= 5; g++) {
+      for (let g = 1; g <= GAME_COUNT; g++) {
         const gameDiv = document.createElement('div');
         gameDiv.id = `game-view-${g}`;
-        gameDiv.style.display = g === 1 ? 'block' : 'none';
+        gameDiv.style.display = g === activeGame ? 'block' : 'none';
         let framesHTML = '';
         for (let f = 1; f <= 10; f++) {
           const is10 = f === 10;
@@ -319,12 +552,12 @@
                 <span id="score-g${g}-f${f}">-</span>
               </div>
               <div class="frame-inputs ${is10 ? 'f10' : ''}">
-                <select onchange="updateShot(${g}, ${f}, 'b1', this.value)">${getOptionsB1(fr.b1)}</select>
-                <select id="sel-g${g}-f${f}-b2" onchange="updateShot(${g}, ${f}, 'b2', this.value)">${getOptionsB2(fr.b1, fr.b2, is10)}</select>
-                ${is10 ? `<select onchange="updateShot(${g}, ${f}, 'b3', this.value)">${getOptionsB1(fr.b3)}</select>` : ''}
-                <input type="text" placeholder="Line (28-10)" value="${fr.line || ''}" onchange="updateShot(${g}, ${f}, 'line', this.value)" />
+                ${ballSelect(g, f, 'b1', fr)}
+                ${ballSelect(g, f, 'b2', fr)}
+                ${is10 ? ballSelect(g, f, 'b3', fr) : ''}
+                <input type="text" placeholder="Line (28-10)" value="${escapeHtml(fr.line)}" onchange="updateShot(${g}, ${f}, 'line', this.value)" />
               </div>
-              <input type="text" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Frame note / comment..." value="${fr.note || ''}" onchange="updateShot(${g}, ${f}, 'note', this.value)" />
+              <input type="text" style="font-size: 0.75rem; padding: 4px 6px;" placeholder="Frame note / comment..." value="${escapeHtml(fr.note)}" onchange="updateShot(${g}, ${f}, 'note', this.value)" />
             </div>
           `;
         }
@@ -334,407 +567,339 @@
       recalcScores();
     }
 
-    function getOptionsB1(val) {
-      let opts = '<option value="">-</option>';
-      opts += `<option value="X" ${val === 'X' ? 'selected' : ''}>X</option>`;
-      for (let i = 9; i >= 0; i--) {
-        const str = i === 0 ? '-' : String(i);
-        opts += `<option value="${str}" ${val === str ? 'selected' : ''}>${str}</option>`;
+    window.updateShot = function(g, f, key, val) {
+      const fr = sessionData.games[g].frames[f];
+      fr[key] = val;
+      if (key === 'b1' || key === 'b2' || key === 'b3') {
+        sanitizeFrame(fr, f);
+        renderGames();
       }
-      return opts;
-    }
-
-    function getOptionsB2(b1, b2, is10) {
-      if (!is10 && b1 === 'X') return '<option value="">-</option>';
-      let opts = '<option value="">-</option>';
-      opts += `<option value="/" ${b2 === '/' ? 'selected' : ''}>/</option>`;
-      for (let i = 9; i >= 0; i--) {
-        const str = i === 0 ? '-' : String(i);
-        opts += `<option value="${str}" ${val === str ? 'selected' : ''}>${str}</option>`;
-      }
-      return opts;
-    }
-
-    function updateShot(g, f, key, val) {
-      sessionData.games[g].frames[f][key] = val;
-      if (key === 'b1') renderGames();
       autoSave();
       recalcScores();
-    }
-
-    function switchView(viewKey) {
-      document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
-        const keys = ['log', 'traj', 'stats', 'hist'];
-        btn.classList.toggle('active', keys[idx] === viewKey);
-      });
-      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-      document.getElementById(`view-${viewKey}`).classList.add('active');
-      if (viewKey === 'traj') drawLane();
-      if (viewKey === 'stats') calcAnalytics();
-      if (viewKey === 'hist') renderHistory();
-    }
-
-    function switchGame(g) {
-      activeGame = g;
-      document.querySelectorAll('.g-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === g));
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById(`game-view-${i}`).style.display = i === g ? 'block' : 'none';
-      }
-      recalcScores();
-    }
+    };
 
     function recalcScores() {
       let seriesTotal = 0;
-      for (let g = 1; g <= 5; g++) {
-        let rolls = [];
-        for (let f = 1; f <= 10; f++) {
-          const fr = sessionData.games[g].frames[f];
-          if (f < 10) {
-            if (fr.b1 === 'X') { rolls.push(10); rolls.push(0); }
-            else if (fr.b2 === '/') { rolls.push(parseInt(fr.b1) || 0); rolls.push(10 - (parseInt(fr.b1) || 0)); }
-            else {
-              rolls.push(fr.b1 === '-' || fr.b1 === '' ? 0 : parseInt(fr.b1) || 0);
-              rolls.push(fr.b2 === '-' || fr.b2 === '' ? 0 : parseInt(fr.b2) || 0);
-            }
-          } else {
-            if (fr.b1 === 'X') rolls.push(10); else rolls.push(fr.b1 === '-' || fr.b1 === '' ? 0 : parseInt(fr.b1) || 0);
-            if (fr.b2 === '/') rolls.push(10 - rolls[rolls.length - 1]);
-            else if (fr.b2 === 'X') rolls.push(10);
-            else rolls.push(fr.b2 === '-' || fr.b2 === '' ? 0 : parseInt(fr.b2) || 0);
-            
-            if (fr.b3 === 'X') rolls.push(10);
-            else if (fr.b3 === '/') rolls.push(10 - rolls[rolls.length - 1]);
-            else rolls.push(fr.b3 === '-' || fr.b3 === '' ? 0 : parseInt(fr.b3) || 0);
-          }
-        }
-
-        let rollIdx = 0;
-        let runningTotal = 0;
-        let hasIncomplete = false;
+      for (let g = 1; g <= GAME_COUNT; g++) {
+        const frames = sessionData.games[g].frames;
+        const { cum, total } = scoreFrames(frames);
+        seriesTotal += total;
 
         for (let f = 1; f <= 10; f++) {
-          const fr = sessionData.games[g].frames[f];
-          let fScore = 0;
-          
-          if (f < 10) {
-            if (fr.b1 === 'X') {
-              fScore = 10 + (rolls[rollIdx + 2] !== undefined ? rolls[rollIdx + 2] : 10) + (rolls[rollIdx + 3] !== undefined ? rolls[rollIdx + 3] : 10);
-              runningTotal += fScore;
-              document.getElementById(`score-g${g}-f${f}`).innerText = runningTotal;
-              rollIdx += 2;
-            } else if (fr.b2 === '/') {
-              fScore = 10 + (rolls[rollIdx + 2] !== undefined ? rolls[rollIdx + 2] : 10);
-              runningTotal += fScore;
-              document.getElementById(`score-g${g}-f${f}`).innerText = runningTotal;
-              rollIdx += 2;
-            } else if (fr.b1 !== '' && fr.b2 !== '') {
-              fScore = (parseInt(fr.b1) || 0) + (parseInt(fr.b2) || 0);
-              runningTotal += fScore;
-              document.getElementById(`score-g${g}-f${f}`).innerText = runningTotal;
-              rollIdx += 2;
-            } else {
-              hasIncomplete = true;
-              document.getElementById(`score-g${g}-f${f}`).innerText = '-';
-              rollIdx += 2;
-            }
-          } else {
-            if (fr.b1 !== '' && (fr.b2 !== '' || fr.b1 === 'X')) {
-              let b1 = fr.b1 === 'X' ? 10 : (parseInt(fr.b1) || 0);
-              let b2 = fr.b2 === '/' ? (10 - b1) : (fr.b2 === 'X' ? 10 : (parseInt(fr.b2) || 0));
-              let b3 = fr.b3 === '/' ? (10 - b2) : (fr.b3 === 'X' ? 10 : (parseInt(fr.b3) || 0));
-              fScore = b1 + b2 + b3;
-              runningTotal += fScore;
-              document.getElementById(`score-g${g}-f${f}`).innerText = runningTotal;
-            } else {
-              hasIncomplete = true;
-              document.getElementById(`score-g${g}-f${f}`).innerText = '-';
-            }
-          }
+          const scoreEl = document.getElementById(`score-g${g}-f${f}`);
+          if (scoreEl) scoreEl.textContent = cum[f - 1] === null ? '-' : cum[f - 1];
         }
 
-        seriesTotal += runningTotal;
         if (g === activeGame) {
-          document.getElementById('disp-curr-score').innerText = runningTotal;
-          document.getElementById('disp-max-score').innerText = hasIncomplete ? 300 : runningTotal;
+          document.getElementById('disp-curr-score').textContent = total;
+          document.getElementById('disp-max-score').textContent = scoreFrames(bestCaseFrames(frames)).total;
         }
       }
-      document.getElementById('disp-series-total').innerText = seriesTotal;
+      document.getElementById('disp-series-total').textContent = seriesTotal;
     }
 
-    function setMode(m) {
-      trajMode = m;
-      document.getElementById('mode-physics').className = m === 'physics' ? 'btn btn-sm' : 'btn btn-secondary btn-sm';
-      document.getElementById('mode-smooth').className = m === 'smooth' ? 'btn btn-sm' : 'btn btn-secondary btn-sm';
-      drawLane();
+    // ---------- Trajectory studio ----------
+    const LANE = {
+      gutterIn: 9.25,
+      widthIn: 41.5,
+      boards: 39,
+      boardIn: 41.5 / 39,
+      headPinIn: 720           // foul line to head pin, 60 ft
+    };
+    const TOTAL_WIDTH_IN = LANE.widthIn + 2 * LANE.gutterIn;
+    const BALL_R_IN = 4.25;
+    const PIN_R_IN = 2.383;
+    const ROW_IN = 10.392;     // 12" triangle spacing
+    // dx = inches from the lane centre, positive = right (toward board 1)
+    const PINS = [
+      { id: 1, dx: 0, row: 0 },
+      { id: 2, dx: -6, row: 1 }, { id: 3, dx: 6, row: 1 },
+      { id: 4, dx: -12, row: 2 }, { id: 5, dx: 0, row: 2 }, { id: 6, dx: 12, row: 2 },
+      { id: 7, dx: -18, row: 3 }, { id: 8, dx: -6, row: 3 }, { id: 9, dx: 6, row: 3 }, { id: 10, dx: 18, row: 3 }
+    ];
+    const ARROWS = [
+      { b: 5, y: 144 }, { b: 10, y: 156 }, { b: 15, y: 168 }, { b: 20, y: 180 },
+      { b: 25, y: 168 }, { b: 30, y: 156 }, { b: 35, y: 144 }
+    ];
+    const DOT_BOARDS = [3, 5, 8, 11, 14, 26, 29, 32, 35, 37];
+    const DOT_Y = 84;
+
+    // Lateral offset from lane centre (inches) of a board, right-handed numbering.
+    function boardToCentreIn(b) {
+      return LANE.widthIn / 2 - (b - 0.5) * LANE.boardIn;
     }
 
-    function setPreset(lay, arr, brk) {
+    function readNum(id, fallback) {
+      const v = parseFloat(document.getElementById(id).value);
+      return Number.isFinite(v) ? v : fallback;
+    }
+
+    // Ball path as {y (inches from foul line), b (board)} points:
+    // straight skid from laydown through the target arrow, a curve that tapers to the
+    // breakpoint (no lateral motion), then the hook from breakpoint into the pocket.
+    function computePath(p) {
+      const L = p.laydown, A = p.arrow, B = p.bpBoard, P = p.pocket;
+      const t = p.arrowDistFt * 12;
+      const bp = Math.min(Math.max(p.bpDistFt * 12, t + 24), LANE.headPinIn - 60);
+      const expo = 1.6 + 2.4 * p.sharp;   // 1.6 = round arc, 4 = late skid/flip
+      const backAt = y => B + (P - B) * Math.pow((y - bp) / (LANE.headPinIn - bp), expo);
+
+      const dxPocket = Math.abs(boardToCentreIn(P));
+      const reach = BALL_R_IN + PIN_R_IN;
+      const contactY = LANE.headPinIn - (dxPocket < reach ? Math.sqrt(reach * reach - dxPocket * dxPocket) : 0);
+
+      const pts = [];
+      for (let i = 0; i <= 30; i++) {
+        const y = t * i / 30;
+        pts.push({ y, b: L + (A - L) * (y / t) });
+      }
+      // Quadratic Bezier whose start follows the skid line and whose end is flat at the breakpoint.
+      const slope = (A - L) / t;
+      let yc = slope !== 0 ? t + (B - A) / slope : (t + bp) / 2;
+      if (!(yc >= t && yc <= bp)) yc = (t + bp) / 2;
+      for (let i = 1; i <= 40; i++) {
+        const u = i / 40;
+        pts.push({
+          y: (1 - u) * (1 - u) * t + 2 * (1 - u) * u * yc + u * u * bp,
+          b: (1 - u) * (1 - u) * A + (2 * (1 - u) * u + u * u) * B
+        });
+      }
+      for (let i = 1; i <= 60; i++) {
+        const y = bp + (contactY - bp) * i / 60;
+        pts.push({ y, b: backAt(y) });
+      }
+
+      const entrySlope = (P - B) * expo / (LANE.headPinIn - bp) * LANE.boardIn;
+      return {
+        pts,
+        bp: { y: bp, b: B },
+        contact: pts[pts.length - 1],
+        launchDeg: Math.atan(Math.abs(A - L) * LANE.boardIn / t) * 180 / Math.PI,
+        entryDeg: Math.atan(Math.abs(entrySlope)) * 180 / Math.PI,
+        hookBoards: Math.abs(P - B)
+      };
+    }
+
+    window.setPreset = function(lay, arr, dist, bpBoard, bpDist, pkt) {
       document.getElementById('tr-laydown').value = lay;
       document.getElementById('tr-arrow').value = arr;
-      document.getElementById('tr-break').value = brk;
+      document.getElementById('tr-dist').value = dist;
+      document.getElementById('tr-bp-board').value = bpBoard;
+      document.getElementById('tr-bp-dist').value = bpDist;
+      document.getElementById('tr-pocket').value = pkt;
       drawLane();
-    }
+    };
 
     function drawLane() {
       const cvs = document.getElementById('laneCanvas');
       if (!cvs) return;
-      const ctx = cvs.getContext('2d');
-      const w = cvs.width;
-      const h = cvs.height;
+      const W = Math.min(cvs.parentElement.clientWidth, 420);
+      if (!W) return; // view hidden
 
-      ctx.clearRect(0, 0, w, h);
-
-      // -------------------------------------------------------------
-      // USBC SPECIFICATION SCALING (60 FT LENGTH x 41.5 INCH BED + GUTTERS)
-      // -------------------------------------------------------------
-      const gutterWidthInches = 9.25;
-      const laneBedWidthInches = 41.5;
-      const totalWidthInches = laneBedWidthInches + (gutterWidthInches * 2); // 60 inches
-      
-      const pxPerInch = w / totalWidthInches;
-      const laneBedLeftX = gutterWidthInches * pxPerInch;
-      const laneBedRightX = laneBedLeftX + (laneBedWidthInches * pxPerInch);
-      const boardWidthPx = (laneBedWidthInches * pxPerInch) / 39; // 1.063 inches / board
-
-      const foulY = h - 60;
-      const pinYHead = 80;
-      const laneLengthPx = foulY - pinYHead;
-      const pxPerFoot = laneLengthPx / 60; // 60 feet from foul line to headpin
-
-      const distToY = ft => foulY - (ft * pxPerFoot);
-      const bToX = b => laneBedRightX - ((b - 0.5) * boardWidthPx);
-
-      // 1. Draw Gutters (Dark Gray)
-      ctx.fillStyle = '#050914';
-      ctx.fillRect(0, 0, laneBedLeftX, h);
-      ctx.fillRect(laneBedRightX, 0, w - laneBedRightX, h);
-
-      // 2. Draw Lane Bed (Synthetic Wood Tone)
-      ctx.fillStyle = '#111827';
-      ctx.fillRect(laneBedLeftX, pinYHead - 40, laneBedWidthInches * pxPerInch, foulY - (pinYHead - 40) + 40);
-
-      // 3. Draw 39 Board Grid Lines
-      ctx.strokeStyle = '#1f2937';
-      ctx.lineWidth = 1;
-      for (let i = 1; i <= 39; i++) {
-        const x = bToX(i);
-        ctx.beginPath();
-        ctx.moveTo(x, pinYHead - 40);
-        ctx.lineTo(x, foulY + 40);
-        ctx.stroke();
-      }
-
-      // 4. Foul Line (0 ft)
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(laneBedLeftX, foulY);
-      ctx.lineTo(laneBedRightX, foulY);
-      ctx.stroke();
-
-      // 5. USBC Foul Line Dots (Spaced every 5 boards)
-      for (let b = 5; b <= 35; b += 5) {
-        const x = bToX(b);
-        const is20 = (b === 20);
-        ctx.fillStyle = is20 ? '#38bdf8' : '#94a3b8';
-        ctx.beginPath();
-        ctx.arc(x, foulY + 12, is20 ? 4.5 : 2.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (is20) {
-          ctx.font = 'bold 10px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('20', x, foulY + 26);
-        }
-      }
-
-      // 6. USBC Laydown Range Dots (7 ft)
-      const laydownY = distToY(7);
-      for (let b = 5; b <= 35; b += 5) {
-        ctx.fillStyle = '#64748b';
-        ctx.beginPath();
-        ctx.arc(bToX(b), laydownY, 2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 7. USBC Target Arrows at 15 ft (V-shaped pattern, board 20 furthest forward)
-      const arrowBaseY = distToY(15);
-      const arrowYMap = {
-        20: arrowBaseY - 18,
-        15: arrowBaseY - 6,  25: arrowBaseY - 6,
-        10: arrowBaseY + 6,  30: arrowBaseY + 6,
-         5: arrowBaseY + 18, 35: arrowBaseY + 18
+      const params = {
+        laydown: readNum('tr-laydown', 25),
+        arrow: readNum('tr-arrow', 10),
+        arrowDistFt: Math.max(readNum('tr-dist', 13), 1),
+        bpBoard: readNum('tr-bp-board', 7),
+        bpDistFt: readNum('tr-bp-dist', 40),
+        pocket: readNum('tr-pocket', 17.5),
+        sharp: readNum('tr-sharp', 0.4)
       };
+      const path = computePath(params);
 
-      Object.entries(arrowYMap).forEach(([bStr, y]) => {
-        const b = parseFloat(bStr);
-        const x = bToX(b);
-        ctx.fillStyle = '#38bdf8';
+      document.getElementById('tr-out-launch').textContent = `${path.launchDeg.toFixed(1)}°`;
+      document.getElementById('tr-out-bp').textContent = `${path.bp.b} @ ${Math.round(path.bp.y / 12)}'`;
+      document.getElementById('tr-out-hook').textContent = `${path.hookBoards.toFixed(1)} bd`;
+      document.getElementById('tr-out-entry').textContent = `${path.entryDeg.toFixed(1)}°`;
+
+      // Horizontal: true scale. Vertical: the lane is heavily compressed, then eases into a
+      // gentler compression near the pins so the rack keeps a readable shape.
+      const pxIn = W / TOTAL_WIDTH_IN;
+      const sTrue = pxIn * 0.55;
+      const y1 = 620, y2 = 712, yTop = 762, d = y2 - y1;
+      const targetPx = W * 3.2;
+      const sLane = Math.max(0.5, (targetPx - sTrue * d / 2 - sTrue * (yTop - y2)) / (y1 + d / 2));
+      const mapY = y => {
+        if (y <= y1) return sLane * y;
+        if (y <= y2) {
+          const u = (y - y1) / d;
+          return sLane * y1 + sLane * (y - y1) + (sTrue - sLane) * d * (u * u * u - u * u * u * u / 2);
+        }
+        return sLane * y1 + (sLane + sTrue) / 2 * d + sTrue * (y - y2);
+      };
+      const padBottom = 26, padTop = 2;
+      const H = Math.round(padBottom + mapY(yTop) + padTop);
+
+      const dpr = window.devicePixelRatio || 1;
+      cvs.width = Math.round(W * dpr);
+      cvs.height = Math.round(H * dpr);
+      cvs.style.width = `${W}px`;
+      cvs.style.height = `${H}px`;
+      const ctx = cvs.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const sy = y => H - padBottom - mapY(y);
+      const cx = dxIn => (LANE.gutterIn + LANE.widthIn / 2 + dxIn) * pxIn;
+      const bx = b => cx(boardToCentreIn(b));
+      const laneLeft = LANE.gutterIn * pxIn;
+      const laneW = LANE.widthIn * pxIn;
+      const boardW = LANE.boardIn * pxIn;
+      const deckEnd = 3 * ROW_IN + LANE.headPinIn + 6;
+
+      // Background, gutters, boards
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#1e1e1f';
+      ctx.fillRect(0, 0, laneLeft, sy(0));
+      ctx.fillRect(laneLeft + laneW, 0, W - laneLeft - laneW, sy(0));
+      for (let i = 0; i < LANE.boards; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#e2ad6c' : '#d89f59';
+        ctx.fillRect(laneLeft + i * boardW, sy(deckEnd), boardW + 0.5, sy(0) - sy(deckEnd));
+      }
+      // Pin deck and pit
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(laneLeft, sy(deckEnd), laneW, sy(LANE.headPinIn - 8) - sy(deckEnd));
+      ctx.fillStyle = '#111';
+      ctx.fillRect(laneLeft, 0, laneW, sy(deckEnd));
+
+      // Distance markers
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let ft = 10; ft <= 50; ft += 10) {
+        const y = sy(ft * 12);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.moveTo(x, y - 8);
-        ctx.lineTo(x - 4, y + 6);
-        ctx.lineTo(x + 4, y + 6);
+        ctx.moveTo(laneLeft, y);
+        ctx.lineTo(laneLeft + laneW, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`${ft}'`, laneLeft / 2, y);
+      }
+      ctx.fillText(`60'`, laneLeft / 2, sy(LANE.headPinIn));
+
+      // Foul line, dots, arrows
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(laneLeft, sy(0) - 3, laneW, 3);
+      ctx.fillStyle = '#27272a';
+      DOT_BOARDS.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(bx(b), sy(DOT_Y), 2, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+      ARROWS.forEach(a => {
+        const x = bx(a.b), y = sy(a.y), hw = boardW * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 9);
+        ctx.lineTo(x + hw, y + 5);
+        ctx.lineTo(x, y + 1);
+        ctx.lineTo(x - hw, y + 5);
         ctx.closePath();
         ctx.fill();
       });
 
-      // 8. USBC Range Finders Set 1 (34' to 37' on boards 15 and 25)
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
-      const rf1Top = distToY(37);
-      const rf1Height = distToY(34) - rf1Top;
-      [15, 25].forEach(b => {
-        ctx.fillRect(bToX(b) - boardWidthPx / 2, rf1Top, boardWidthPx, rf1Height);
+      // Board numbers under the foul line
+      ctx.fillStyle = '#94a3b8';
+      for (let b = 5; b <= 35; b += 5) ctx.fillText(String(b), bx(b), sy(0) + 13);
+
+      // The ball is drawn just touching the head pin, using true (horizontal) scale for the gap.
+      const ballX = bx(path.contact.b);
+      const headPinY = sy(LANE.headPinIn);
+      const reachPx = (BALL_R_IN + PIN_R_IN) * pxIn;
+      const gapX = Math.abs(ballX - cx(0));
+      const ballY = headPinY + (gapX < reachPx ? Math.sqrt(reachPx * reachPx - gapX * gapX) : 0);
+
+      // Ball path
+      ctx.save();
+      ctx.beginPath();
+      path.pts.forEach((pt, i) => {
+        const x = bx(pt.b), y = Math.max(sy(pt.y), ballY);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
+      ctx.lineTo(ballX, ballY);
+      ctx.strokeStyle = '#00bcff';
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00bcff';
+      ctx.stroke();
+      ctx.restore();
 
-      // 9. USBC Range Finders Set 2 (40' to 43' on boards 10 and 30)
-      const rf2Top = distToY(43);
-      const rf2Height = distToY(40) - rf2Top;
-      [10, 30].forEach(b => {
-        ctx.fillRect(bToX(b) - boardWidthPx / 2, rf2Top, boardWidthPx, rf2Height);
-      });
-
-      // 10. USBC Pin Deck & 10-Pin Triangle Setup
-      const pinRadius = (2.375 / 2) * pxPerInch;
-      const pinRowY = [distToY(60), distToY(61.73), distToY(63.46), distToY(65.19)];
-      const pinPositions = [
-        { p: 1,  b: 20,   y: pinRowY[0] },
-        { p: 2,  b: 25.65, y: pinRowY[1] }, { p: 3, b: 14.35, y: pinRowY[1] },
-        { p: 4,  b: 31.3, y: pinRowY[2] },  { p: 5, b: 20,    y: pinRowY[2] }, { p: 6, b: 8.7, y: pinRowY[2] },
-        { p: 7,  b: 36.95, y: pinRowY[3] }, { p: 8, b: 25.65, y: pinRowY[3] }, { p: 9, b: 14.35, y: pinRowY[3] }, { p: 10, b: 3.05, y: pinRowY[3] }
-      ];
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 1;
-      pinPositions.forEach(pin => {
-        ctx.beginPath();
-        ctx.arc(bToX(pin.b), pin.y, Math.max(pinRadius, 3), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      });
-
-      // -------------------------------------------------------------
-      // 11. TRAJECTORY RENDERING
-      // -------------------------------------------------------------
-      const lay = parseFloat(document.getElementById('tr-laydown').value) || 28;
-      const arr = parseFloat(document.getElementById('tr-arrow').value) || 10;
-      const brk = parseFloat(document.getElementById('tr-break').value) || 7;
-      const pkt = parseFloat(document.getElementById('tr-pocket').value) || 17.5;
-
-      const P0 = { x: bToX(lay), y: foulY };          // 0 ft
-      const P1 = { x: bToX(arr), y: distToY(15) };    // 15 ft
-      const P2 = { x: bToX(brk), y: distToY(40) };    // 40 ft
-      const P3 = { x: bToX(pkt), y: distToY(60) };    // 60 ft
-
-      if (trajMode === 'physics') {
-        // 4-PHASE REALISTIC PHYSICS VECTOR
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 3;
-
-        // Phase 1 & 2: Straight Skid (Laydown -> Arrows -> Breakpoint)
-        ctx.beginPath();
-        ctx.moveTo(P0.x, P0.y);
-        ctx.lineTo(P1.x, P1.y);
-        ctx.lineTo(P2.x, P2.y);
-        ctx.stroke();
-
-        // Phase 3: Bezier Hook Arc (40ft to 45ft Backend)
-        const P_hook_end = {
-          x: P2.x + (P3.x - P2.x) * 0.45,
-          y: distToY(45)
-        };
-        const skidDx = P2.x - P1.x;
-        const skidDy = P2.y - P1.y;
-        const rollDx = P3.x - P_hook_end.x;
-        const rollDy = P3.y - P_hook_end.y;
-
-        const cp1 = { x: P2.x + skidDx * 0.15, y: P2.y + skidDy * 0.15 };
-        const cp2 = { x: P_hook_end.x - rollDx * 0.25, y: P_hook_end.y - rollDy * 0.25 };
-
-        ctx.beginPath();
-        ctx.moveTo(P2.x, P2.y);
-        ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, P_hook_end.x, P_hook_end.y);
-        ctx.stroke();
-
-        // Phase 4: Straight Roll (45ft to 60ft Pocket)
-        ctx.beginPath();
-        ctx.moveTo(P_hook_end.x, P_hook_end.y);
-        ctx.lineTo(P3.x, P3.y);
-        ctx.stroke();
-
-        // Breakpoint Tick Indicators
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath();
-        ctx.arc(P2.x, P2.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#eab308';
-        ctx.beginPath();
-        ctx.arc(P_hook_end.x, P_hook_end.y, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-      } else {
-        // SMOOTH CONTINUOUS ARCH MODE
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(P0.x, P0.y);
-        
-        ctx.bezierCurveTo(
-          P0.x + (P1.x - P0.x) * 0.5, P0.y + (P1.y - P0.y) * 0.5,
-          P1.x - (P2.x - P1.x) * 0.2, P1.y + (P2.y - P1.y) * 0.2,
-          P2.x, P2.y
-        );
-        ctx.bezierCurveTo(
-          P2.x + (P3.x - P2.x) * 0.3, P2.y + (P3.y - P2.y) * 0.3,
-          P3.x, P2.y + (P3.y - P2.y) * 0.7,
-          P3.x, P3.y
-        );
-        ctx.stroke();
-
-        ctx.fillStyle = '#38bdf8';
-        ctx.beginPath();
-        ctx.arc(P2.x, P2.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Ball Indicator at Pocket (USBC 8.5" Diameter Ball Scale)
-      const ballRadius = (8.5 / 2) * pxPerInch;
-      ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
-      ctx.strokeStyle = '#22c55e';
+      // Breakpoint marker
+      const bpX = bx(path.bp.b), bpY = sy(path.bp.y);
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(P3.x, P3.y, Math.max(ballRadius, 4), 0, Math.PI * 2);
+      ctx.moveTo(bpX, bpY - 7);
+      ctx.lineTo(bpX + 7, bpY);
+      ctx.lineTo(bpX, bpY + 7);
+      ctx.lineTo(bpX - 7, bpY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Pins
+      PINS.forEach(pin => {
+        const x = cx(pin.dx), y = sy(LANE.headPinIn + pin.row * ROW_IN), r = PIN_R_IN * pxIn;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#18181b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.62, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.fillStyle = '#18181b';
+        ctx.font = `600 ${Math.max(8, Math.round(r * 0.7))}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillText(String(pin.id), x, y + 0.5);
+      });
+
+      // Ball at the moment it reaches the pocket
+      ctx.fillStyle = 'rgba(0, 188, 255, 0.4)';
+      ctx.strokeStyle = '#00bcff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, BALL_R_IN * pxIn, 0, 2 * Math.PI);
       ctx.fill();
       ctx.stroke();
     }
 
+    window.addEventListener('resize', () => {
+      if (document.getElementById('view-traj').classList.contains('active')) drawLane();
+    });
+
+    // ---------- Analytics ----------
     function calcAnalytics() {
-      let totalPinfall = 0, completedGames = 0, totalB1 = 0, b1Count = 0, sparesMade = 0, spareOpp = 0, opens = 0, totalFrames = 0;
-      let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
-      
-      history.forEach(sess => {
-        for (let g = 1; g <= 5; g++) {
-          let gScore = 0;
+      let totalPinfall = 0, completedGames = 0, totalB1 = 0, b1Count = 0;
+      let sparesMade = 0, spareOpp = 0, opens = 0, totalFrames = 0;
+
+      getHistory().forEach(sess => {
+        for (let g = 1; g <= GAME_COUNT; g++) {
+          const frames = sess.games[g].frames;
+          const { cum } = scoreFrames(frames);
+          if (cum[9] !== null) { totalPinfall += cum[9]; completedGames++; }
+
           for (let f = 1; f <= 10; f++) {
-            const fr = sess.games[g]?.frames[f];
-            if (!fr) continue;
+            const fr = frames[f];
+            if (!frameComplete(fr, f)) continue;
             totalFrames++;
-            if (fr.b1 === 'X') {
-              gScore += 10;
-              totalB1 += 10; b1Count++;
-            } else if (fr.b1) {
-              const b1Val = parseInt(fr.b1) || 0;
-              totalB1 += b1Val; b1Count++;
+            const r = frameRolls(fr, f);
+            totalB1 += r[0];
+            b1Count++;
+            if (r[0] < 10) {
               spareOpp++;
-              if (fr.b2 === '/') { sparesMade++; gScore += 10; }
-              else {
-                opens++;
-                gScore += (b1Val + (parseInt(fr.b2) || 0));
-              }
+              if (fr.b2 === '/') sparesMade++; else opens++;
             }
           }
-          if (gScore > 0) { totalPinfall += gScore; completedGames++; }
         }
       });
 
@@ -744,73 +909,98 @@
       document.getElementById('st-opens').innerText = totalFrames ? `${opens} (${Math.round((opens / totalFrames) * 100)}%)` : '0 (0%)';
     }
 
-    function autoSave() {
+    // ---------- Persistence ----------
+    window.autoSave = function() {
       sessionData.date = document.getElementById('session-date').value;
       sessionData.center = document.getElementById('session-center').value;
       sessionData.notes = document.getElementById('session-notes').value;
-      localStorage.setItem('bowling_active_session', JSON.stringify(sessionData));
-    }
+      writeJSON('bowling_active_session', sessionData);
+    };
 
-    function saveSession() {
+    window.saveSession = function() {
       autoSave();
-      let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
-      history = history.filter(s => s.id !== sessionData.id);
-      history.unshift(sessionData);
-      localStorage.setItem('bowling_history', JSON.stringify(history));
-      alert('Session saved to device history!');
-    }
+      const snapshot = JSON.parse(JSON.stringify(sessionData));
+      const history = getHistory().filter(s => s.id !== snapshot.id);
+      history.unshift(snapshot);
+      writeJSON('bowling_history', history);
+      alert('Session saved to device history successfully!');
+      renderHistory();
+      calcAnalytics();
+    };
 
     function loadCurrentSession() {
-      const saved = localStorage.getItem('bowling_active_session');
-      if (saved) {
-        try { sessionData = JSON.parse(saved); } catch (e) {}
-      }
+      const saved = readJSON('bowling_active_session', null);
+      if (saved && saved.games) sessionData = normalizeSession(saved);
     }
 
     function renderHistory() {
       const list = document.getElementById('history-list');
-      const history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
+      if (!list) return;
+      const history = getHistory();
       if (!history.length) { list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted)">No saved sessions yet.</p>'; return; }
-      list.innerHTML = history.map(s => `
+      list.innerHTML = history.map(s => {
+        const scores = [];
+        for (let g = 1; g <= GAME_COUNT; g++) {
+          const { cum } = scoreFrames(s.games[g].frames);
+          if (cum[9] !== null) scores.push(cum[9]);
+        }
+        const summary = scores.length ? `${scores.join(' / ')} (${scores.reduce((a, b) => a + b, 0)})` : '';
+        const notes = s.notes ? (s.notes.length > 40 ? s.notes.substring(0, 40) + '...' : s.notes) : 'No notes';
+        return `
         <div class="history-item">
           <div class="history-info">
-            <h4>${s.date} - ${s.center || 'Unspecified Center'}</h4>
-            <p>${s.notes ? s.notes.substring(0, 40) + '...' : 'No notes'}</p>
+            <h4>${escapeHtml(s.date)} - ${escapeHtml(s.center || 'Unspecified Center')}</h4>
+            <p>${summary ? escapeHtml(summary) + ' · ' : ''}${escapeHtml(notes)}</p>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="deleteHistorySession(${s.id})">Delete</button>
-        </div>
-      `).join('');
+          <div style="display: flex; gap: 4px;">
+            <button class="btn btn-secondary btn-sm" onclick="loadHistorySession(${Number(s.id)})">Load</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteHistorySession(${Number(s.id)})">Delete</button>
+          </div>
+        </div>`;
+      }).join('');
     }
 
-    function deleteHistorySession(id) {
+    window.loadHistorySession = function(id) {
+      const session = getHistory().find(s => s.id === id);
+      if (session) {
+        sessionData = JSON.parse(JSON.stringify(session));
+        fillSessionFields();
+        autoSave();
+        renderGames();
+        window.switchGame(1);
+        window.switchView('log');
+      }
+    };
+
+    window.deleteHistorySession = function(id) {
       if (confirm('Delete this session?')) {
-        let history = JSON.parse(localStorage.getItem('bowling_history') || '[]');
-        history = history.filter(s => s.id !== id);
-        localStorage.setItem('bowling_history', JSON.stringify(history));
+        writeJSON('bowling_history', getHistory().filter(s => s.id !== id));
         renderHistory();
         calcAnalytics();
       }
-    }
+    };
 
-    function clearCurrentSession() {
+    window.clearCurrentSession = function() {
       if (confirm('Clear active session?')) {
-        localStorage.removeItem('bowling_active_session');
+        try { localStorage.removeItem('bowling_active_session'); } catch (e) {}
         location.reload();
       }
-    }
+    };
 
-    function toggleGuide() {
+    window.toggleGuide = function() {
       const m = document.getElementById('guide-modal');
       m.style.display = m.style.display === 'block' ? 'none' : 'block';
-    }
+    };
 
-    function exportCSV() {
+    window.exportCSV = function() {
       autoSave();
-      let csv = 'Game,Frame,Ball 1,Ball 2,Ball 3,Line,Frame Note\n';
-      for (let g = 1; g <= 5; g++) {
+      const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      let csv = 'Game,Frame,Ball 1,Ball 2,Ball 3,Score,Line,Frame Note\n';
+      for (let g = 1; g <= GAME_COUNT; g++) {
+        const { cum } = scoreFrames(sessionData.games[g].frames);
         for (let f = 1; f <= 10; f++) {
           const fr = sessionData.games[g].frames[f];
-          csv += `${g},${f},${fr.b1},${fr.b2},${fr.b3 || ''},${fr.line},"${(fr.note || '').replace(/"/g, '""')}"\n`;
+          csv += `${g},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.line)},${q(fr.note)}\n`;
         }
       }
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -818,7 +1008,7 @@
       a.href = URL.createObjectURL(blob);
       a.download = `bowling_session_${sessionData.date}.csv`;
       a.click();
-    }
+    };
 
     window.onload = init;
   </script>
