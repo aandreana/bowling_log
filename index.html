@@ -92,8 +92,7 @@
     .pocket-chip.hit { border-color: var(--success-color); color: var(--success-color); }
     .pocket-chip.miss { border-color: var(--danger-color); color: var(--danger-color); }
     .badge-split { color: var(--danger-color); margin-left: 6px; font-size: 0.65rem; }
-    .game-ball { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .game-ball label { margin: 0; white-space: nowrap; }
+    .game-setup { margin-bottom: 4px; }
 
     .stats-heading { font-size: 0.75rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 8px; }
     .stats-scope, .stats-note { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
@@ -108,6 +107,12 @@
     .traj-readouts > div { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 4px; text-align: center; }
     .traj-readouts .lbl { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
     .traj-readouts .val { font-size: 0.9rem; font-weight: 700; color: var(--accent-color); }
+    .status-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+    .status-chips button { flex: 1; min-width: 62px; font-size: 0.7rem; font-weight: 600; padding: 6px 4px; border-radius: 14px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; }
+    .status-chips button.active { background: var(--accent-color); border-color: var(--accent-color); color: #0f172a; }
+    .status-info { font-size: 0.75rem; line-height: 1.4; background: rgba(56, 189, 248, 0.08); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; }
+    .status-info p { margin-bottom: 6px; }
+    .status-info ul { padding-left: 16px; margin-top: 2px; }
     .ball-spec { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
     .traj-advice { font-size: 0.75rem; color: var(--text-main); background: rgba(56, 189, 248, 0.1); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; margin-top: 8px; line-height: 1.4; }
     .traj-advice b { color: var(--accent-color); }
@@ -296,6 +301,18 @@
           </div>
         </div>
         <div class="ball-spec" id="tr-center-spec" style="margin: -4px 0 8px;"></div>
+        <div class="form-group">
+          <label>Lane Status</label>
+          <div class="status-chips" id="tr-status-chips">
+            <button type="button" data-status="fresh" onclick="setLaneStatus('fresh')">Fresh</button>
+            <button type="button" data-status="transition" onclick="setLaneStatus('transition')">Transition</button>
+            <button type="button" data-status="breakdown" onclick="setLaneStatus('breakdown')">Breakdown</button>
+            <button type="button" data-status="carrydown" onclick="setLaneStatus('carrydown')">Carrydown</button>
+            <button type="button" data-status="burnout" onclick="setLaneStatus('burnout')">Burnout</button>
+          </div>
+          <input type="hidden" id="tr-status" value="fresh" />
+        </div>
+        <div class="status-info" id="tr-status-info"></div>
         <div class="grid-2" id="tr-custom-pattern">
           <div class="form-group">
             <label>Oil Pattern</label>
@@ -326,6 +343,7 @@
           <span><i style="background:#f59e0b"></i>Hook</span>
           <span><i style="background:#22c55e"></i>Roll</span>
           <span><i style="background:rgba(56,189,248,0.35)"></i>Oil</span>
+          <span><i style="background:rgba(245,158,11,0.45)"></i>Worn</span>
         </div>
 
         <div class="canvas-container">
@@ -500,6 +518,14 @@
       </details>
 
       <details>
+        <summary>Lane Status: What to Expect</summary>
+        <div class="body">
+          <p class="muted">Usual order on a league night: Fresh → Transition → Breakdown, with Carrydown or Burnout late. Set each game's status in the log and the Trajectory tab shows that lane.</p>
+          <div id="plan-statuses"></div>
+        </div>
+      </details>
+
+      <details>
         <summary>Centers: League Night Lanes</summary>
         <div class="body">
           <h4>🎳 Classic Bowl · Brunswick</h4>
@@ -614,6 +640,8 @@
     // Ball values: '' = not bowled yet, '-' = gutter/miss (0), '1'-'9', 'X' = strike, '/' = spare.
     const DATA_VERSION = 2;
     const GAME_COUNT = 5;
+    // Typical lane status (LANE_STATUS) by game number on a league night; change it per game in the log.
+    const DEFAULT_GAME_STATUS = ['fresh', 'transition', 'breakdown', 'breakdown', 'burnout'];
     let activeGame = 1;
     let sessionData = newSession();
 
@@ -632,7 +660,7 @@
       // centerId picks the lane profile (CENTERS); center is free-text notes about the pattern / lanes.
       const s = { v: DATA_VERSION, id: Date.now(), date: todayLocal(), centerId: 'classic', center: '', notes: '', games: {} };
       for (let g = 1; g <= GAME_COUNT; g++) {
-        s.games[g] = { ball: 'viking', frames: {} };
+        s.games[g] = { ball: 'viking', status: DEFAULT_GAME_STATUS[g - 1], frames: {} };
         for (let f = 1; f <= 10; f++) s.games[g].frames[f] = blankFrame();
       }
       return s;
@@ -648,6 +676,7 @@
       for (let g = 1; g <= GAME_COUNT; g++) {
         s.games[g] = s.games[g] || { frames: {} };
         if (!BALLS[s.games[g].ball]) s.games[g].ball = 'viking';
+        if (!LANE_STATUS[s.games[g].status]) s.games[g].status = DEFAULT_GAME_STATUS[g - 1];
         const frames = s.games[g].frames = s.games[g].frames || {};
         for (let f = 1; f <= 10; f++) {
           const fr = Object.assign(blankFrame(), frames[f] || {});
@@ -839,6 +868,7 @@
         if (el) el.style.display = i === g ? 'block' : 'none';
       }
       recalcScores();
+      syncTrajWithLog();
     };
 
     function fillSessionFields() {
@@ -852,7 +882,6 @@
       loadCurrentSession();
       fillSessionFields();
       loadTrajInputs();
-      syncTrajCenter();
       renderGames();
       window.switchGame(1);
       calcAnalytics();
@@ -904,10 +933,18 @@
         }
         const ballOptions = Object.entries(BALLS).map(([key, b]) =>
           `<option value="${key}"${sessionData.games[g].ball === key ? ' selected' : ''}>${b.name}</option>`).join('');
+        const statusOptions = Object.entries(LANE_STATUS).map(([key, st]) =>
+          `<option value="${key}"${sessionData.games[g].status === key ? ' selected' : ''}>${st.name}</option>`).join('');
         gameDiv.innerHTML = `
-          <div class="game-ball">
-            <label>Ball</label>
-            <select onchange="setGameBall(${g}, this.value)">${ballOptions}</select>
+          <div class="grid-2 game-setup">
+            <div class="form-group">
+              <label>Ball</label>
+              <select onchange="setGameBall(${g}, this.value)">${ballOptions}</select>
+            </div>
+            <div class="form-group">
+              <label>Lane Status</label>
+              <select onchange="setGameStatus(${g}, this.value)">${statusOptions}</select>
+            </div>
           </div>
           <div class="frames-container">${framesHTML}</div>`;
         container.appendChild(gameDiv);
@@ -942,21 +979,31 @@
       autoSave();
     };
 
-    // Picking a center in the log also sets the Trajectory tab's lane profile.
     window.onSessionCenter = function() {
       autoSave();
-      syncTrajCenter();
+      syncTrajWithLog();
     };
 
-    function syncTrajCenter() {
-      if (!CENTERS[sessionData.centerId]) return;
-      document.getElementById('tr-center').value = sessionData.centerId;
+    // The Trajectory tab follows the log: this session's center, and the game being
+    // logged's ball and lane status.
+    function syncTrajWithLog() {
+      if (CENTERS[sessionData.centerId]) document.getElementById('tr-center').value = sessionData.centerId;
+      const game = sessionData.games[activeGame];
+      document.getElementById('tr-ball').value = game.ball;
+      document.getElementById('tr-status').value = game.status;
       onTrajInput();
     }
 
     window.setGameBall = function(g, ball) {
       sessionData.games[g].ball = ball;
       autoSave();
+      if (g === activeGame) syncTrajWithLog();
+    };
+
+    window.setGameStatus = function(g, status) {
+      sessionData.games[g].status = status;
+      autoSave();
+      if (g === activeGame) syncTrajWithLog();
     };
 
     window.updateShot = function(g, f, key, val) {
@@ -1053,14 +1100,49 @@
         shape: 'Centered, feathered out gradually toward board 5'
       }
     };
-    const TRAJ_INPUTS = ['tr-laydown', 'tr-arrow', 'tr-speed', 'tr-rpm', 'tr-rot', 'tr-tilt', 'tr-ball', 'tr-center', 'tr-pattern', 'tr-oil', 'tr-surface'];
+    // How the oil changes over a league night. track: how much oil has been worn out of the
+    // right-hand track (boards ~7-15) through the heads and mid-lane; heads: extra wear across
+    // the front 25 ft; carryFt / residue: how far oil has been pushed past the pattern and how
+    // much of it is left on the back end.
+    const LANE_STATUS = {
+      fresh: {
+        name: 'Fresh', track: 0, heads: 0, carryFt: 0, residue: 0,
+        see: "Oil as laid down. The ball skids through the heads and turns near the pattern's breakpoint target.",
+        options: ["Start on your center's starting line with your benchmark ball.", 'Make small 1-and-1 moves until the lane shows a trend.']
+      },
+      transition: {
+        name: 'Transition', track: 0.35, heads: 0, carryFt: 1, residue: 0.05,
+        see: 'The track (about boards 7–15) is starting to dry. The ball reads a little earlier and hits slightly higher.',
+        options: ['Move left 1-and-1 to stay in the oil.', 'Or add about 0.5 mph to push the ball a little longer.']
+      },
+      breakdown: {
+        name: 'Breakdown', track: 0.7, heads: 0.15, carryFt: 2, residue: 0.1,
+        see: 'The track is clearly dry through the mid-lane. The ball hooks early, hits high, and can roll out before the pins.',
+        options: ['Move left with a 2-and-1 to open your angle into fresher oil.', 'Switch to a cleaner ball (Zen Soul) so it saves energy for the back end.', 'More speed or a polished surface also delays the hook.']
+      },
+      carrydown: {
+        name: 'Carrydown', track: 0, heads: 0, carryFt: 6, residue: 0.8,
+        see: 'Oil has been pushed past the end of the pattern. The back end is slicker: the ball skids long, hits light, and leaves weak 10s.',
+        options: ['Move right 1-and-1 to find friction sooner.', 'Go stronger or rougher: Viking Conquest or Storm Lock, or a sanded surface.', 'Slow down about 0.5 mph.']
+      },
+      burnout: {
+        name: 'Burnout', track: 0.95, heads: 0.6, carryFt: 3, residue: 0.2,
+        see: 'The heads and track are fried after heavy play. The ball grabs almost immediately and has nothing left at the pins.',
+        options: ['Move well left (several boards, 2-and-1) to get into the oil that is left.', 'Use your cleanest ball, polished if you can (Zen Soul).', 'Speed up and keep your hand more behind the ball (less rotation).']
+      }
+    };
+    const TRAJ_INPUTS = ['tr-laydown', 'tr-arrow', 'tr-speed', 'tr-rpm', 'tr-rot', 'tr-tilt', 'tr-ball', 'tr-center', 'tr-status', 'tr-pattern', 'tr-oil', 'tr-surface'];
 
     function centerName(session) {
       return CENTERS[session.centerId] ? CENTERS[session.centerId].name : (session.center || 'Other center');
     }
 
-    // Oil shape for a center, or for the custom pattern inputs.
-    function laneParams(centerKey = document.getElementById('tr-center').value) {
+    // Oil shape for a center (or the custom pattern inputs) in a given lane status.
+    function laneParams(centerKey = document.getElementById('tr-center').value,
+                        statusKey = document.getElementById('tr-status').value) {
+      const st = LANE_STATUS[statusKey] ? statusKey : 'fresh';
+      const { track, heads, carryFt, residue } = LANE_STATUS[st];
+      const wear = { statusKey: st, track, heads, carryFt, residue };
       const c = CENTERS[centerKey];
       if (c) {
         return {
@@ -1068,13 +1150,15 @@
           // Steeper ratio = drier outside relative to the middle.
           outsideFrac: Math.min(0.2 + 0.03 * c.ratio, 0.9),
           laneOil: c.laneOil * 25 / c.volumeMl,
-          laneDry: c.laneDry
+          laneDry: c.laneDry,
+          ...wear
         };
       }
       const house = document.getElementById('tr-pattern').value === 'house';
       return {
         centerKey: 'custom', oilFt: readNum('tr-oil', 40), oilEdge: 10, dryEdge: 5,
-        outsideFrac: house ? 0.35 : 0, laneOil: 1, laneDry: 1
+        outsideFrac: house ? 0.35 : 0, laneOil: 1, laneDry: 1,
+        ...wear
       };
     }
 
@@ -1126,17 +1210,56 @@
       return Math.min(Math.max((p.oilEdge - fromGutter) / (p.oilEdge - p.dryEdge), 0), 1);
     }
 
+    const clamp01 = v => Math.min(Math.max(v, 0), 1);
+
+    // Share of the oil worn away at a spot by earlier shots (0 = untouched).
+    function wearAt(board, yFt, p) {
+      let kept = 1;
+      if (p.track) {
+        const across = clamp01(board < 7 ? (board - 4) / 3 : board > 15 ? (19 - board) / 4 : 1);
+        const along = clamp01((yFt - 3) / 7) * (yFt > p.oilFt - 5 ? Math.max(0.5, clamp01(0.5 + (p.oilFt - yFt) / 10)) : 1);
+        kept *= 1 - 0.45 * p.track * across * along;
+      }
+      if (p.heads) {
+        const across = board >= 4 && board <= 28 ? 1 : 0.5;
+        kept *= 1 - 0.5 * p.heads * across * clamp01((25 - yFt) / 10);
+      }
+      return 1 - kept;
+    }
+
+    // How much carried-down oil covers a spot (0-1): a film dragged along the ball track
+    // (about boards 5-22) from the last few feet of the pattern into the back end.
+    function carryAt(board, yFt, p) {
+      if (!p.residue) return 0;
+      const end = p.oilFt + p.carryFt;
+      const across = clamp01(board < 5 ? (board - 2) / 3 : board > 22 ? (26 - board) / 4 : 1);
+      const along = clamp01((yFt - (p.oilFt - 8)) / 4) * clamp01(1 - (yFt - end) / 8);
+      return p.residue * across * along;
+    }
+
+    // Share of the original oil left at a spot (1 = pattern as laid down, 0 = dry), for drawing.
+    function oilLevel(board, yFt, p) {
+      const pattern = yFt < p.oilFt - 3 ? 1 : clamp01((p.oilFt - yFt) / 3);
+      let level = pattern * (1 - p.outsideFrac * outsideFactor(board, p));
+      level += (1 - level) * carryAt(board, yFt, p);
+      return level * (1 - wearAt(board, yFt, p));
+    }
+
     // Friction coefficient at a point (x = metres from the right edge, y = metres past the foul line).
     // House-style patterns carry less oil outside, so the outer boards hold (hook) more.
     function frictionAt(x, y, p) {
       const dry = PHYS.MU_DRY * p.dryMult * p.laneDry;
       const yFt = y / PHYS.FT;
-      if (yFt >= p.oilFt) return dry;
+      const board = x / PHYS.BW + 0.5;
       const oil = (PHYS.MU_OIL_FRONT + (PHYS.MU_OIL_BACK - PHYS.MU_OIL_FRONT) * Math.min(yFt / p.oilFt, 1)) * p.oilMult * p.laneOil;
-      let mu = yFt < p.oilFt - 3 ? oil : oil + (dry - oil) * (yFt - (p.oilFt - 3)) / 3;
-      const outsideMu = dry * p.outsideFrac;
-      if (outsideMu > mu) mu += (outsideMu - mu) * outsideFactor(x / PHYS.BW + 0.5, p);
-      return mu;
+      let mu = dry;
+      if (yFt < p.oilFt) {
+        mu = yFt < p.oilFt - 3 ? oil : oil + (dry - oil) * (yFt - (p.oilFt - 3)) / 3;
+        const outsideMu = dry * p.outsideFrac;
+        if (outsideMu > mu) mu += (outsideMu - mu) * outsideFactor(board, p);
+      }
+      mu += (oil - mu) * carryAt(board, yFt, p);
+      return mu + (dry - mu) * wearAt(board, yFt, p);
     }
 
     // Rolls the ball from the foul line at launch angle alpha (radians, + = toward higher boards)
@@ -1307,6 +1430,11 @@
       });
     }
 
+    window.setLaneStatus = function(key) {
+      document.getElementById('tr-status').value = key;
+      onTrajInput();
+    };
+
     window.setRelease = function(speed, rpm, rot, tilt) {
       document.getElementById('tr-speed').value = speed;
       document.getElementById('tr-rpm').value = rpm;
@@ -1323,6 +1451,10 @@
 
       const p = readTrajParams();
       const shot = runShot(p);
+      const status = LANE_STATUS[p.statusKey];
+      document.querySelectorAll('#tr-status-chips button').forEach(b => b.classList.toggle('active', b.dataset.status === p.statusKey));
+      document.getElementById('tr-status-info').innerHTML =
+        `<p>${status.see}</p><b>Line-up options</b><ul>${status.options.map(o => `<li>${o}</li>`).join('')}</ul>`;
       const center = CENTERS[p.centerKey];
       document.getElementById('tr-custom-pattern').style.display = center ? 'none' : '';
       document.getElementById('tr-center-spec').textContent = center
@@ -1390,17 +1522,24 @@
       ctx.fillStyle = '#111';
       ctx.fillRect(laneLeft, 0, laneW, sy(deckEnd));
 
-      // Oil: one column per board, fading out over the last 3 ft of the pattern
+      // Oil: shaded by how much is left on each board, foot by foot (shows wear and carrydown)
       const oilEnd = p.oilFt * 12;
+      const lastFt = Math.ceil(p.oilFt + p.carryFt + 8);  // carried oil fades out 8 ft past the carry
       for (let b = 1; b <= LANE.boards; b++) {
-        const outside = p.outsideFrac ? outsideFactor(b, p) : 0;
-        const alpha = 0.3 * (1 - 0.75 * outside);
-        const grad = ctx.createLinearGradient(0, sy(0), 0, sy(oilEnd));
-        grad.addColorStop(0, `rgba(56,189,248,${alpha})`);
-        grad.addColorStop(Math.max(0, (oilEnd - 36) / oilEnd), `rgba(56,189,248,${alpha})`);
-        grad.addColorStop(1, 'rgba(56,189,248,0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(bx(b) - boardW / 2, sy(oilEnd), boardW + 0.5, sy(0) - sy(oilEnd));
+        for (let f = 0; f < lastFt; f++) {
+          const top = sy((f + 1) * 12), h = sy(f * 12) - top + 0.5;
+          const level = oilLevel(b, f + 0.5, p);
+          if (level > 0.01) {
+            ctx.fillStyle = `rgba(56,189,248,${(0.34 * level).toFixed(3)})`;
+            ctx.fillRect(bx(b) - boardW / 2, top, boardW + 0.5, h);
+          }
+          // Worn (dried-out) track shaded amber so breakdown and burnout are easy to see.
+          const wear = f < p.oilFt ? wearAt(b, f + 0.5, p) : 0;
+          if (wear > 0.03) {
+            ctx.fillStyle = `rgba(245,158,11,${(0.6 * wear).toFixed(3)})`;
+            ctx.fillRect(bx(b) - boardW / 2, top, boardW + 0.5, h);
+          }
+        }
       }
 
       // Distance markers
@@ -1424,6 +1563,9 @@
       ctx.fillStyle = '#38bdf8';
       ctx.fillText('oil', laneLeft + laneW + laneLeft / 2, sy(oilEnd) - 6);
       ctx.fillText(`${p.oilFt}'`, laneLeft + laneW + laneLeft / 2, sy(oilEnd) + 6);
+      if (p.residue >= 0.3) {
+        ctx.fillText('carry', laneLeft + laneW + laneLeft / 2, sy(oilEnd + (p.carryFt + 4) * 12));
+      }
 
       // Foul line, dots, arrows
       ctx.fillStyle = '#ef4444';
@@ -1602,7 +1744,7 @@
 
     const entryCache = new Map();
     function estimateEntry(base, ballKey, line) {
-      const key = JSON.stringify([base.speed, base.rpm, base.rotation, base.tilt, base.centerKey, base.oilFt, base.outsideFrac,
+      const key = JSON.stringify([base.speed, base.rpm, base.rotation, base.tilt, base.centerKey, base.statusKey, base.oilFt, base.outsideFrac,
         document.getElementById('tr-surface').value, ballKey, line.laydown, line.arrow]);
       if (!entryCache.has(key)) {
         const shot = runShot({ ...base, ...ballFriction(ballKey), laydown: line.laydown, arrow: line.arrow });
@@ -1635,8 +1777,8 @@
 
       sessions.forEach(sess => {
         if (filter !== 'all' && sess.centerId !== filter) return;
-        // Entry angles use this session's lanes; "Other" falls back to the custom pattern.
-        const base = { ...release, ...laneParams(CENTERS[sess.centerId] ? sess.centerId : 'custom') };
+        // Entry angles use this session's lanes and each game's lane status; "Other" falls back to the custom pattern.
+        const laneKey = CENTERS[sess.centerId] ? sess.centerId : 'custom';
         let series = 0, used = false;
         for (let g = 1; g <= GAME_COUNT; g++) {
           const game = sess.games[g];
@@ -1666,7 +1808,7 @@
             }
             const line = parseLine(fr.line);
             if (line && fr.b1 !== '') {
-              const e = estimateEntry(base, game.ball, line);
+              const e = estimateEntry({ ...release, ...laneParams(laneKey, game.status) }, game.ball, line);
               if (e !== null) t.entry.push(e);
             }
           }
@@ -1769,7 +1911,6 @@
         sessionData = JSON.parse(JSON.stringify(session));
         fillSessionFields();
         autoSave();
-        syncTrajCenter();
         renderGames();
         window.switchGame(1);
         window.switchView('log');
@@ -1795,6 +1936,8 @@
     // Straight spare lines through board 20 at the arrows, grouped by pins that share a line.
     function renderPlan() {
       renderCenterLines();
+      document.getElementById('plan-statuses').innerHTML = Object.values(LANE_STATUS).map(st =>
+        `<h4>${st.name}</h4><p>${st.see}</p><ul>${st.options.map(o => `<li>${o}</li>`).join('')}</ul>`).join('');
       const eyes = 20, eyesDist = arrowDistIn(eyes);
       const groups = [[7], [4], [2, 8], [1, 5], [3, 9], [6], [10]];
       document.getElementById('plan-spares').innerHTML = groups.map(group => {
@@ -1811,7 +1954,7 @@
     // Foul-line board that carries to the pocket with eyes on CENTER_EYES at a center,
     // using the release on the Trajectory tab.
     function centerStartLine(centerKey, ball) {
-      const base = { ...readTrajParams(), ...laneParams(centerKey), ...ballFriction(ball), arrow: CENTER_EYES };
+      const base = { ...readTrajParams(), ...laneParams(centerKey, 'fresh'), ...ballFriction(ball), arrow: CENTER_EYES };
       return solveForPocket(1, 39, 25, v => ({ ...base, laydown: v }));
     }
 
@@ -1842,14 +1985,14 @@
     window.exportCSV = function() {
       autoSave();
       const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      let csv = 'Center,Game,Ball Used,Frame,Ball 1,Ball 2,Ball 3,Score,Pins Left,Split,Pocket,Line,Frame Note\n';
+      let csv = 'Center,Game,Ball Used,Lane Status,Frame,Ball 1,Ball 2,Ball 3,Score,Pins Left,Split,Pocket,Line,Frame Note\n';
       for (let g = 1; g <= GAME_COUNT; g++) {
         const game = sessionData.games[g];
         const { cum } = scoreFrames(game.frames);
         for (let f = 1; f <= 10; f++) {
           const fr = game.frames[f];
           const pocket = fr.pocket === true ? 'Yes' : fr.pocket === false ? 'No' : '';
-          csv += `${q(centerName(sessionData))},${g},${q(BALLS[game.ball].name)},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.leave.join('-'))},${isSplit(fr.leave) ? 'Yes' : ''},${pocket},${q(fr.line)},${q(fr.note)}\n`;
+          csv += `${q(centerName(sessionData))},${g},${q(BALLS[game.ball].name)},${LANE_STATUS[game.status].name},${f},${q(fr.b1)},${q(fr.b2)},${q(fr.b3)},${cum[f - 1] ?? ''},${q(fr.leave.join('-'))},${isSplit(fr.leave) ? 'Yes' : ''},${pocket},${q(fr.line)},${q(fr.note)}\n`;
         }
       }
       const blob = new Blob([csv], { type: 'text/csv' });
