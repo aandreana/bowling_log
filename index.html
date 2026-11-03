@@ -84,6 +84,13 @@
     .frame-inputs select { padding: 7px 4px; }
     .frame-inputs.f10 select { padding: 7px 2px; font-size: 0.75rem; }
     .frame-card.needs-ball { border-color: var(--warning-color); }
+    .coach-panel { background: var(--card-bg); border: 1px solid var(--accent-color); border-radius: 8px; padding: 10px 12px; margin: -4px 0 12px; font-size: 0.78rem; line-height: 1.45; }
+    .coach-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .coach-action { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .coach-action b { color: var(--accent-color); }
+    .coach-panel ul { padding-left: 16px; margin: 4px 0 8px; }
+    .coach-panel li { margin-bottom: 3px; }
+    .coach-panel .coach-extra { border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px; }
     .score-warning { font-size: 0.75rem; color: var(--warning-color); margin: -6px 0 10px; }
 
     .frame-extra { display: flex; gap: 8px; align-items: center; }
@@ -251,6 +258,8 @@
         </div>
       </div>
 
+      <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;" onclick="showCoach()">🎯 Next-Shot Tip</button>
+      <div class="coach-panel" id="coach-panel" hidden></div>
       <div class="score-warning" id="score-warning" hidden></div>
       <div id="game-views"></div>
 
@@ -695,6 +704,7 @@
         <dt>Line / Arrow</dt><dd>Optional. The board you played at the foul line (for now, the board your feet are on) and the board the ball crossed at the arrows. When you enter Ball 1 they fill in from your previous shot, or 20 / 10 for the first shot, so change them if you moved.</dd>
         <dt>Pin rack</dt><dd>Optional. Tap the pins left standing after your first ball. Sets the Ball 1 count and flags splits.</dd>
         <dt>Hit?</dt><dd>Optional. Where the first ball hit: <b>Brooklyn</b> (crossed to the left of the head pin), <b>High</b> (too much head pin), <b>Pocket</b> (1-3), <b>Light</b> (too little head pin), <b>Way light</b> (missed the head pin to the right).</dd>
+        <dt>Next-Shot Tip</dt><dd>Reads your logged shots (hit results, or pins left when Hit? is blank) and suggests a move for the next shot: which way, how far, and when to change balls. Tap <b>Use for frame …</b> to set the next frame's Line and Arrow.</dd>
         <dt>Max Possible</dt><dd>The best score you can still get this game if you strike out from here.</dd>
       </dl>
 
@@ -2228,6 +2238,179 @@
 
       set('st-scope', `${t.sessions} session${t.sessions === 1 ? '' : 's'} (saved sessions plus the one you're logging now)`);
     }
+
+    // ---------- Next-shot coach ----------
+    // Rule-based tips from tonight's logged shots: which way the ball has been missing,
+    // how far you've already moved, and which line has worked best.
+    const HIT_SIDE = { brooklyn: 2, high: 1, pocket: 0, light: -1, waylight: -2 };
+    const BALL_STRENGTH = ['zen', 'viking', 'lock'];  // cleanest -> strongest
+    let coachLine = null;
+
+    // Where the first ball hit: the logged Hit?, or a best guess from the pins left.
+    function shotHit(fr) {
+      if (HIT_SIDE[fr.hit] !== undefined) return fr.hit;
+      if (fr.b1 === 'X') return 'pocket';
+      const leave = fr.leave;
+      if (!leave.length) return null;
+      if (leave.includes(1)) {
+        const left = leave.filter(p => [2, 4, 7, 8].includes(p)).length;
+        const right = leave.filter(p => [3, 6, 9, 10].includes(p)).length;
+        return left > right ? 'waylight' : right > left ? 'brooklyn' : null;
+      }
+      const has = pin => leave.includes(pin);
+      if (has(2)) return 'light';                       // 2-8, 2-4-5, 2-4-7: head pin deflected, light hit
+      if (has(4)) return 'high';                        // 4, 4-9, 4-6: too much head pin
+      if (has(3) || has(6)) return 'light';             // 6-10, 3-10, 3-6-10
+      return 'pocket';  // 10, 7, 5, 8-10, 9 and similar: in the pocket, didn't carry
+    }
+
+    function sessionShots() {
+      const shots = [];
+      for (let g = 1; g <= GAME_COUNT; g++) {
+        const game = sessionData.games[g];
+        for (let f = 1; f <= 10; f++) {
+          const fr = game.frames[f];
+          if (fr.b1 === '') continue;
+          const hit = shotHit(fr);
+          shots.push({ g, f, fr, line: frameLine(fr), ball: game.ball, status: game.status,
+                       hit, side: hit === null ? null : HIT_SIDE[hit], logged: HIT_SIDE[fr.hit] !== undefined });
+        }
+      }
+      return shots;
+    }
+
+    const lineText = l => `${l.laydown} → ${l.arrow}`;
+    const sameLine = (a, b) => a && b && Math.abs(a.laydown - b.laydown) <= 1 && Math.abs(a.arrow - b.arrow) <= 1;
+    const clampBoard = b => Math.min(39, Math.max(1, b));
+
+    // The next frame to be bowled (in the game being logged, or the next game).
+    function nextFrame() {
+      for (let g = activeGame; g <= GAME_COUNT; g++) {
+        for (let f = 1; f <= 10; f++) if (sessionData.games[g].frames[f].b1 === '') return { g, f };
+      }
+      return null;
+    }
+
+    function coachAdvice() {
+      const shots = sessionShots();
+      const lined = shots.filter(s => s.line);
+      const current = lined.length ? lined[lined.length - 1].line : { ...DEFAULT_LINE };
+      const ball = sessionData.games[activeGame].ball;
+      const why = [], extra = [];
+      let action, line = null;
+
+      // Judge only shots on the line you're playing now; misses from an old line don't count.
+      const judged = shots.filter(s => s.side !== null);
+      const onLine = judged.filter(s => !s.line || sameLine(s.line, current)).slice(-3);
+      if (!judged.length) {
+        return { action: 'Log a couple more shots first', why: ['Tips need first balls with a Hit? result or pins left.'], extra, line };
+      }
+      const label = s => `${HIT_RESULTS[s.hit]}${s.logged ? '' : ' (from pins)'}`;
+      const last = judged[judged.length - 1];
+      if (onLine.length < 2 && !(onLine.length === 1 && Math.abs(onLine[0].side) === 2)) {
+        return {
+          action: `Stay on <b>${lineText(current)}</b>`,
+          why: [onLine.length ? `You just moved here and the first shot was ${label(onLine[0]).toLowerCase()}.` : `Last shot: G${last.g} F${last.f} ${label(last)}.`,
+                'Give the new line another good shot before adjusting again.'],
+          extra, line
+        };
+      }
+      const recent = onLine;
+      why.push(`On ${lineText(current)}: ${recent.map(s => `G${s.g} F${s.f} ${label(s)}`).join(', ')}.`);
+      const avg = recent.reduce((a, s) => a + s.side, 0) / recent.length;
+      const leftMiss = recent.filter(s => s.side > 0).length;
+      const rightMiss = recent.filter(s => s.side < 0).length;
+      const move = (feet, eyes) => ({ laydown: clampBoard(current.laydown + feet), arrow: clampBoard(current.arrow + eyes) });
+
+      if (leftMiss && rightMiss && Math.abs(avg) < 1) {
+        action = `Stay on <b>${lineText(current)}</b>`;
+        why.push('Misses on both sides point to execution, not the lane. Moving would chase it.');
+        why.push('Focus on hitting your target at the arrows with the same speed and release.');
+      } else if (avg >= 0.67) {
+        const strong = avg >= 1.3;
+        line = strong ? move(2, 1) : move(1, 1);
+        action = `Move LEFT ${strong ? '2-and-1' : '1-and-1'} → <b>Line ${line.laydown} · Arrow ${line.arrow}</b>`;
+        why.push(strong ? 'Consistently high or Brooklyn: the ball is hooking too early. Opening the angle gets it into more oil.'
+                        : 'Leaning high: a parallel move keeps the same angle with a little more oil.');
+      } else if (avg <= -0.67) {
+        const strong = avg <= -1.3;
+        line = strong ? move(-2, -1) : move(-1, -1);
+        action = `Move RIGHT ${strong ? '2-and-1' : '1-and-1'} → <b>Line ${line.laydown} · Arrow ${line.arrow}</b>`;
+        why.push(strong ? 'Consistently light: the ball is skidding through. Moving right finds friction sooner.'
+                        : 'Leaning light: a small parallel move right should bring it back to the pocket.');
+      } else {
+        action = `Stay on <b>${lineText(current)}</b>`;
+        why.push('You are around the pocket. Keep the line and repeat the shot.');
+        // Pocket hits that didn't strike: what the leave says about the hit.
+        const leaves = recent.filter(s => s.hit === 'pocket' && s.fr.b1 !== 'X').map(s => s.fr.leave);
+        const left = pin => leaves.some(l => l.includes(pin));
+        if (left(10)) extra.push('Pocket 10-pins: often too little angle or too much speed. Try 0.5 mph slower, or feet 1 board left with eyes unchanged.');
+        if (left(4)) extra.push('Pocket 4-pins: slightly high or too strong. Try feet 1 board left, or 0.5 mph more speed.');
+        if (leaves.some(l => l.includes(5) || (l.includes(8) && l.includes(10)))) extra.push('5-pin or 8-10 leaves: the ball is running out of energy. Move left 1-and-1 into more oil, or switch to a cleaner ball.');
+        if (left(7) && !left(4)) extra.push('Pocket 7-pins: usually a touch light. If it repeats, try feet 1 board right.');
+      }
+
+      // How far you've moved tonight with this ball, and whether a ball change would help.
+      const withBall = lined.filter(s => s.ball === ball);
+      const drift = withBall.length ? current.laydown - withBall[0].line.laydown : 0;
+      const idx = BALL_STRENGTH.indexOf(ball);
+      if (avg >= 0.67 && drift >= 5) {
+        extra.push(idx > 0
+          ? `You've already moved ${drift} boards left with the ${BALLS[ball].name}. If it keeps hooking early, switch to the cleaner ${BALLS[BALL_STRENGTH[idx - 1]].name}.`
+          : `You've moved ${drift} boards left with your cleanest ball. Add a little speed or try a polished surface next time.`);
+      }
+      if (avg <= -0.67 && drift <= -5) {
+        extra.push(idx >= 0 && idx < BALL_STRENGTH.length - 1
+          ? `You've already moved ${-drift} boards right. If it keeps skidding, switch to the stronger ${BALLS[BALL_STRENGTH[idx + 1]].name}.`
+          : `You've moved ${-drift} boards right with your strongest ball. Slow down slightly, or use more surface next time.`);
+      }
+
+      // Lane status hint when the trend doesn't match what's set for this game.
+      const status = sessionData.games[activeGame].status;
+      if (avg >= 0.67 && drift >= 3 && status === 'fresh') extra.push('The lanes look like they are breaking down. Set this game\'s Lane Status to Transition so Trajectory matches.');
+      if (avg <= -0.67 && drift <= -3 && (status === 'fresh' || status === 'transition')) extra.push('Getting lighter as the night goes on suggests carrydown. Set Lane Status to Carrydown so Trajectory matches.');
+
+      // The line that has worked best tonight with this ball.
+      const groups = {};
+      withBall.forEach(s => {
+        const key = lineText(s.line);
+        groups[key] = groups[key] || { line: s.line, n: 0, strikes: 0, pocket: 0 };
+        groups[key].n++;
+        if (s.fr.b1 === 'X') groups[key].strikes++;
+        if (s.hit === 'pocket') groups[key].pocket++;
+      });
+      const best = Object.values(groups).filter(g => g.n >= 2)
+        .sort((a, b) => (b.strikes * 2 + b.pocket) / b.n - (a.strikes * 2 + a.pocket) / a.n)[0];
+      if (best && best.pocket && !sameLine(best.line, current) && !(line && sameLine(best.line, line))) {
+        extra.push(`Best line tonight: ${lineText(best.line)}: ${best.strikes} strike${best.strikes === 1 ? '' : 's'}, ${best.pocket} pocket hit${best.pocket === 1 ? '' : 's'} in ${best.n} shots.`);
+      }
+
+      return { action, why, extra, line };
+    }
+
+    window.showCoach = function() {
+      const panel = document.getElementById('coach-panel');
+      const tip = coachAdvice();
+      const next = nextFrame();
+      coachLine = tip.line;
+      const applyTo = tip.line && next ? next : null;
+      panel.hidden = false;
+      panel.innerHTML = `
+        <div class="coach-head"><span>Next shot</span><button class="btn btn-secondary btn-sm" onclick="document.getElementById('coach-panel').hidden = true">Close</button></div>
+        <div class="coach-action">${tip.action}</div>
+        <ul>${tip.why.map(w => `<li>${w}</li>`).join('')}</ul>
+        ${tip.extra.length ? `<div class="coach-extra"><ul>${tip.extra.map(w => `<li>${w}</li>`).join('')}</ul></div>` : ''}
+        ${applyTo ? `<button class="btn btn-success" style="width: 100%;" onclick="applyCoachLine(${applyTo.g}, ${applyTo.f})">Use for Game ${applyTo.g}, Frame ${applyTo.f}</button>` : ''}`;
+    };
+
+    window.applyCoachLine = function(g, f) {
+      if (!coachLine) return;
+      Object.assign(sessionData.games[g].frames[f], coachLine);
+      document.getElementById('coach-panel').hidden = true;
+      if (g !== activeGame) window.switchGame(g);
+      renderGames();
+      autoSave();
+    };
 
     // ---------- Persistence ----------
     window.autoSave = function() {
