@@ -170,6 +170,13 @@
     .help-content dt { font-weight: 700; margin-top: 6px; }
     .help-content dd { color: var(--text-muted); margin: 1px 0 0; }
     .help-intro { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+    .plan-switch { display: flex; gap: 4px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; margin-bottom: 10px; }
+    .plan-switch button { flex: 1; padding: 7px; border: none; border-radius: 6px; background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+    .plan-switch button.active { background: var(--accent-color); color: #0f172a; }
+    .checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .checklist label { display: flex; gap: 8px; align-items: flex-start; font-size: 0.8rem; text-transform: none; color: var(--text-main); margin: 0; line-height: 1.4; }
+    .checklist input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; accent-color: var(--success-color); }
+    .checklist input:checked + span { color: var(--text-muted); text-decoration: line-through; }
     .plan details { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; }
     .plan summary { padding: 11px 12px; font-size: 0.9rem; font-weight: 600; color: var(--accent-color); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
     .plan summary::-webkit-details-marker { display: none; }
@@ -512,6 +519,11 @@
 
     <!-- GAME PLAN VIEW -->
     <div id="view-plan" class="view-panel plan">
+      <div class="plan-switch">
+        <button type="button" data-plan="gameplan" class="active" onclick="setPlanView('gameplan')">Game Plan</button>
+        <button type="button" data-plan="technique" onclick="setPlanView('technique')">Technique</button>
+      </div>
+      <div id="plan-gameplan">
       <div class="plan-profile">
         <div><span>Speed</span><b>16 mph</b></div>
         <div><span>Revs</span><b>400 rpm</b></div>
@@ -683,6 +695,103 @@
           <p class="plan-note">Straight lines from the foul-line board through board 20 at the arrows to each pin.</p>
         </div>
       </details>
+      </div>
+
+      <div id="plan-technique" hidden>
+        <details open>
+          <summary>Pre-Shot Checklist</summary>
+          <div class="body">
+            <div class="checklist">
+              <label><input type="checkbox" /> <span><b>Posture:</b> spine straight (not leaning right), hinged forward 10–15° from the hips, knees soft.</span></label>
+              <label><input type="checkbox" /> <span><b>Hand at 10 o'clock:</b> palm facing your left hip, forearm relaxed, <b>not</b> turned palm-up.</span></label>
+              <label><input type="checkbox" /> <span><b>Wrist:</b> cupped to support the ball, slight load, index finger spread and pointing slightly left. The ball rests on your index finger and forearm; no squeezing.</span></label>
+              <label><input type="checkbox" /> <span><b>Ball &amp; elbow:</b> ball in line with your right shoulder, elbow close to your right hip.</span></label>
+              <label><input type="checkbox" /> <span><b>Relaxed arm:</b> left hand carries most of the weight; right shoulder dropped, no muscle in the swing.</span></label>
+              <label><input type="checkbox" /> <span><b>Eyes:</b> on your target arrow until the ball crosses it.</span></label>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('#plan-technique .checklist input').forEach(c => { c.checked = false; })">Reset</button>
+          </div>
+        </details>
+
+        <details>
+          <summary>Setup &amp; Hand Position</summary>
+          <div class="body">
+            <ul>
+              <li><b>Stance:</b> stand tall, spine straight up and down, tilt forward 10–15° from the hips, knees slightly flexed.</li>
+              <li><b>Hand at 10 o'clock:</b> hand on the right side of the ball, palm facing your left hip. This is a natural, relaxed forearm position; turning the forearm fully <b>palm-up</b> keeps the arm muscles working the whole time, which leads to muscling the swing. "Palm toward 10 o'clock" is the same as "fingers at 4 o'clock at release".</li>
+              <li><b>Wrist and index finger:</b> cup the wrist to support the ball (the half-thumb grip needs it) with a <b>slight</b> load: index finger spread and pointing slightly left rather than straight forward. The ball then rests against your index finger and forearm, so you hold it without squeezing or scooping. That gripping is what tires the wrist and makes it break.</li>
+              <li><b>Shoulder:</b> let your right shoulder drop naturally under the ball's weight. It frees up the swing and helps keep the ball close to your ankle.</li>
+              <li><b>Ball and elbow:</b> hold the ball in line with your right shoulder, with your elbow near your right hip. Tucking the elbow toward your belly button pulls the ball across your body and can send the swing, and the ball, left.</li>
+              <li><b>Left hand:</b> carries most of the weight in the stance (around 70%) so your right arm can stay loose.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>5-Step Approach</summary>
+          <div class="body">
+            <table>
+              <thead><tr><th>Step</th><th>Feet</th><th>Ball</th><th>Effort</th></tr></thead>
+              <tbody>
+                <tr><td><b>1</b></td><td>Left, short timing step</td><td>Stays still in the stance</td><td>None</td></tr>
+                <tr><td><b>2</b></td><td>Right, slightly inward to clear your hip</td><td>Push away straight toward your target; left hand guides it</td><td>Light push</td></tr>
+                <tr><td><b>3</b></td><td>Left</td><td>Drops into the downswing under its own weight</td><td>None: gravity</td></tr>
+                <tr><td><b>4</b></td><td>Right; left arm out for balance</td><td>Top of the backswing, feels weightless</td><td>None</td></tr>
+                <tr><td><b>5</b></td><td>Left slide, chest low</td><td>Swings close past your left (slide) ankle, straight along your target line</td><td>Release</td></tr>
+              </tbody>
+            </table>
+            <p class="plan-note">Let the swing stay relaxed: the arm follows the ball's weight. Keeping the ball close to your ankle is easier when you aren't steering it.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Release &amp; Finish</summary>
+          <div class="body">
+            <ul>
+              <li><b>Thumb first:</b> with the half-thumb grip, your thumb slips out first at the bottom of the swing.</li>
+              <li><b>Fingers lift and turn:</b> your fingers carry the ball through and come up the right side, finishing around 4 o'clock (seen from behind). Keep it quick but <b>smooth</b>: accelerate through the ball rather than snapping or forcing the wrist, which is where strain and breaking come from.</li>
+              <li><b>Finish high:</b> "telephone" finish, with your hand up near your right ear and your arm travelling toward your target, not across your body.</li>
+              <li><b>Hold the finish</b> until the ball passes your target arrow.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Drift &amp; Alignment</summary>
+          <div class="body">
+            <ul>
+              <li><b>Your drift:</b> up to about 5 boards left. Consistent drift is fine; drift that <b>varies</b> is what causes misses.</li>
+              <li><b>Boards in the app are at the foul line.</b> Log and plan with where the ball crosses the line, not where you stand. Drift isn't built in until you've confirmed it.</li>
+              <li><b>Check it now and then:</b> after a shot, look down at your slide foot and compare with your starting board.</li>
+              <li><b>Walk toward your target</b> rather than deliberately crossing over; extra crossover adds drift and left misses.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Classic Bowl Lines (Viking Conquest)</summary>
+          <div class="body">
+            <table>
+              <thead><tr><th>When</th><th>Line</th><th>Arrow</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><b>Fresh</b>, outside start</td><td>20</td><td>10</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('fresh', 20, 10)">Lane</button></td></tr>
+                <tr><td><b>Fresh</b>, inside (your Game 1 line)</td><td>35</td><td>21</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('fresh', 35, 21)">Lane</button></td></tr>
+                <tr><td><b>Breaking down</b>, hooking early</td><td>30</td><td>15½</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('breakdown', 30, 15.5)">Lane</button></td></tr>
+                <tr><td><b>Burnout</b>, deep inside</td><td>38</td><td>21½</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('burnout', 38, 21.5)">Lane</button></td></tr>
+              </tbody>
+            </table>
+            <ul>
+              <li><b>Line</b> is the board at the foul line, the same as in your log. Set your feet from there with your usual drift.</li>
+              <li>A ½ means aim between two boards. On this pattern half a board at the arrows is the difference between light and the pocket.</li>
+              <li>Between these lines, make 2-and-1 moves: follow the miss, and use <b>Next-Shot Tip</b> on the Log tab when it's stubborn.</li>
+              <li>When you move left, move your <b>target</b> left too. Moving only your feet a long way with the same target sends the ball across the lane.</li>
+            </ul>
+            <p class="plan-note">Lines are checked with the trajectory model (calibrated on your 2 November Classic session) and your logged results. Treat them as starting points.</p>
+          </div>
+        </details>
+
+        <p class="plan-note" style="margin: 4px 2px 12px;">If wrist pain or numbness keeps coming back, ease off and have it checked; a coach or pro shop can also adjust your grip or fit a wrist support.</p>
+      </div>
     </div>
 
   </div>
@@ -1013,6 +1122,7 @@
       loadCurrentSession();
       fillSessionFields();
       loadTrajInputs();
+      try { if (localStorage.getItem('bowling_plan_view') === 'technique') setPlanView('technique'); } catch (e) {}
       // A session that hasn't started yet records the profile and ball surface it's bowled with.
       if (!sessionData.profile && !sessionHasBalls(sessionData)) {
         sessionData.profile = { ...MY_PROFILE, surface: document.getElementById('tr-surface').value };
@@ -2543,6 +2653,20 @@
       const laydown = centerStartLine(centerKey, ball);
       document.getElementById('tr-center').value = centerKey;
       showLineOnLane(ball, laydown === null ? 25 : laydown, CENTER_EYES);
+    };
+
+    window.setPlanView = function(view) {
+      document.querySelectorAll('.plan-switch button').forEach(b => b.classList.toggle('active', b.dataset.plan === view));
+      document.getElementById('plan-gameplan').hidden = view !== 'gameplan';
+      document.getElementById('plan-technique').hidden = view !== 'technique';
+      try { localStorage.setItem('bowling_plan_view', view); } catch (e) {}
+    };
+
+    // Technique guide lines are for Classic Bowl with the Viking Conquest.
+    window.showTechLine = function(status, laydown, arrow) {
+      document.getElementById('tr-center').value = 'classic';
+      document.getElementById('tr-status').value = status;
+      showLineOnLane('viking', laydown, arrow);
     };
 
     window.showLineOnLane = function(ball, laydown, arrow) {
