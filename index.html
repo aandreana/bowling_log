@@ -277,8 +277,9 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 8px; margin-top: 12px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
         <button class="btn btn-success" style="flex:1" onclick="saveSession()">Save Session</button>
+        <button class="btn btn-secondary" onclick="startNewSession()">New Session</button>
         <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
         <button class="btn btn-danger" onclick="clearCurrentSession()">Clear</button>
       </div>
@@ -1121,7 +1122,19 @@
 
     function init() {
       loadCurrentSession();
+      // Opened on a new day: the last session goes to History and a fresh one starts, so a
+      // finished night can't be typed over by accident. Sessions from before editedOn existed
+      // count as finished once they're saved and dated before today.
+      const today = todayLocal();
+      const lastDay = sessionData.editedOn
+        || (getHistory().some(s => s.id === sessionData.id) && sessionData.date < today ? sessionData.date : today);
+      const startFresh = lastDay !== today && sessionHasBalls(sessionData);
+      if (startFresh) {
+        keepInHistory(sessionData);
+        sessionData = newSession();
+      }
       fillSessionFields();
+      if (startFresh) autoSave();
       loadTrajInputs();
       try { if (localStorage.getItem('bowling_plan_view') === 'technique') setPlanView('technique'); } catch (e) {}
       // A session that hasn't started yet records the profile and ball surface it's bowled with.
@@ -2583,6 +2596,7 @@
       sessionData.center = document.getElementById('session-center').value;
       sessionData.centerId = document.getElementById('session-center-id').value;
       sessionData.notes = document.getElementById('session-notes').value;
+      sessionData.editedOn = todayLocal();
       writeJSON('bowling_active_session', sessionData);
       // Once saved, keep the History copy current so it never goes stale.
       const history = readJSON('bowling_history', []);
@@ -2593,13 +2607,34 @@
       }
     };
 
-    window.saveSession = function() {
-      autoSave();
-      const snapshot = JSON.parse(JSON.stringify(sessionData));
+    // Puts a copy of the session at the top of History, replacing any earlier copy.
+    function keepInHistory(session) {
+      const snapshot = JSON.parse(JSON.stringify(session));
       const history = getHistory().filter(s => s.id !== snapshot.id);
       history.unshift(snapshot);
       writeJSON('bowling_history', history);
+    }
+
+    window.saveSession = function() {
+      autoSave();
+      keepInHistory(sessionData);
       alert('Session saved to device history successfully!');
+      renderHistory();
+      calcAnalytics();
+    };
+
+    // Saves the open session to History (if anything was bowled) and starts a blank one.
+    window.startNewSession = function() {
+      const hasBalls = sessionHasBalls(sessionData);
+      if (!confirm(hasBalls ? 'Save this session to History and start a new one?' : 'Start a new session?')) return;
+      autoSave();
+      if (hasBalls) keepInHistory(sessionData);
+      sessionData = newSession();
+      sessionData.profile = { ...MY_PROFILE, surface: document.getElementById('tr-surface').value };
+      fillSessionFields();
+      autoSave();
+      renderGames();
+      window.switchGame(1);
       renderHistory();
       calcAnalytics();
     };
@@ -2639,11 +2674,15 @@
     window.loadHistorySession = function(id) {
       const session = getHistory().find(s => s.id === id);
       if (session) {
+        // Keep the open session in History before replacing it.
+        autoSave();
+        if (sessionData.id !== id && sessionHasBalls(sessionData)) keepInHistory(sessionData);
         sessionData = JSON.parse(JSON.stringify(session));
         fillSessionFields();
         autoSave();
         renderGames();
         window.switchGame(1);
+        renderHistory();
         window.switchView('log');
       }
     };
@@ -2651,13 +2690,22 @@
     window.deleteHistorySession = function(id) {
       if (confirm('Delete this session?')) {
         writeJSON('bowling_history', getHistory().filter(s => s.id !== id));
+        // Deleting the open session clears it too, so it isn't saved back to History later.
+        if (id === sessionData.id) {
+          sessionData = newSession();
+          sessionData.profile = { ...MY_PROFILE, surface: document.getElementById('tr-surface').value };
+          fillSessionFields();
+          autoSave();
+          renderGames();
+          window.switchGame(1);
+        }
         renderHistory();
         calcAnalytics();
       }
     };
 
     window.clearCurrentSession = function() {
-      if (confirm('Clear active session?')) {
+      if (confirm('Clear the open session? Anything not saved to History will be lost.')) {
         try { localStorage.removeItem('bowling_active_session'); } catch (e) {}
         location.reload();
       }
