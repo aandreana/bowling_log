@@ -312,11 +312,11 @@
         <div class="grid-4">
           <div class="form-group">
             <label>Speed (mph)</label>
-            <input type="number" id="tr-speed" value="16" min="10" max="24" step="0.5" oninput="onTrajInput()" />
+            <input type="number" id="tr-speed" value="16.5" min="10" max="24" step="0.5" oninput="onTrajInput()" />
           </div>
           <div class="form-group">
             <label>Rev Rate (rpm)</label>
-            <input type="number" id="tr-rpm" value="400" min="100" max="650" step="10" oninput="onTrajInput()" />
+            <input type="number" id="tr-rpm" value="335" min="100" max="650" step="5" oninput="onTrajInput()" />
           </div>
           <div class="form-group">
             <label>Axis Rot. (°)</label>
@@ -525,8 +525,8 @@
       </div>
       <div id="plan-gameplan">
       <div class="plan-profile">
-        <div><span>Speed</span><b>16 mph</b></div>
-        <div><span>Revs</span><b>400 rpm</b></div>
+        <div><span>Speed</span><b>16.5 mph</b></div>
+        <div><span>Revs</span><b>335 rpm</b></div>
         <div><span>Rotation</span><b>45°</b></div>
         <div><span>Tilt</span><b>10°</b></div>
       </div>
@@ -614,7 +614,7 @@
             <li><b>String pinsetters:</b> pins deflect less, so good hits leave more corner pins. A strong roll and solid entry angle matter more, and so does your spare shooting.</li>
           </ul>
           <button class="btn btn-secondary btn-sm" onclick="showCenterStart('planet', 'viking')">Show on Lane</button>
-          <p class="plan-note" style="margin-top: 10px;">Model lines use eyes on board 15 and your current release on the Trajectory tab. The pattern sheet's suggested lines (slide 18–20 → arrow 10 at Classic, slide 14–16 → board 12 at Planet) suit lower rev rates; at 400 rpm they go high in the model.</p>
+          <p class="plan-note" style="margin-top: 10px;">Model lines use eyes on board 15 and your current release on the Trajectory tab. The pattern sheet's suggested lines: slide 18–20 → arrow 10 at Classic fits your measured release (about 19–20 reaches the pocket in the model); slide 14–16 → board 12 at Planet still hooks too much for you.</p>
         </div>
       </details>
 
@@ -645,7 +645,7 @@
         <div class="body">
           <h4>Game 1: Fresh oil · Viking Conquest</h4>
           <ul>
-            <li>Start at 28 at the foul line, eyes 15. Keep speed at 16 mph and the release relaxed.</li>
+            <li>Start at 28 at the foul line, eyes 15. Keep speed at 16.5 mph and the release relaxed.</li>
             <li>Pocket → stay put. Use the first 2–3 frames to learn the lane, not to chase it.</li>
             <li>As the track dries, the ball starts hooking earlier and hitting high. Move <b>left</b>, usually 2-and-1, to stay ahead of it.</li>
           </ul>
@@ -670,7 +670,7 @@
           <table>
             <thead><tr><th>Ball</th><th>Role</th><th>Use when</th></tr></thead>
             <tbody>
-              <tr><td><b>900 Global Viking Conquest</b><br><span class="muted">Solid · 2000 Abralon · RG 2.51 / 0.052</span></td><td>Benchmark</td><td>Fresh oil. Reads early, smooth and predictable.</td></tr>
+              <tr><td><b>900 Global Viking Conquest</b><br><span class="muted">Solid · 2000 Abralon · RG 2.51 / 0.052</span><br><span class="muted">Layout (measured 3 Nov): pin ~1¾" above the fingers, just right of the grip centre; globe logo ~2¾" right of the grip, level with the bottom of the fingers. Est. ~5" pin to PAP (PAP not marked).<br>Track (5 Nov): ~1" outside the fingers on the logo side, passing by the thumb, ~2" of flare. Fits a semi-roller with the PAP ~5½" from the grip.</span></td><td>Benchmark</td><td>Fresh oil. Reads early, smooth and predictable.</td></tr>
               <tr><td><b>900 Global Zen Soul</b><br><span class="muted">Hybrid · 4000 Abralon · RG 2.49 / 0.051</span></td><td>Transition</td><td>Fronts burned. Cleaner through the heads, quicker off the dry.</td></tr>
               <tr><td><b>Storm Lock</b><br><span class="muted">Hybrid · 3000 Abralon · RG 2.48 / 0.054</span></td><td>Heavy oil</td><td>Long or heavy patterns, or carrydown when the Viking skids.</td></tr>
               <tr><td><b>Brunswick TZone</b><br><span class="muted">Polyester · high gloss</span></td><td>Spares</td><td>Single pins and corner pins. Goes straight.</td></tr>
@@ -774,19 +774,19 @@
             <table>
               <thead><tr><th>When</th><th>Line</th><th>Arrow</th><th></th></tr></thead>
               <tbody>
-                <tr><td><b>Fresh</b>, outside start</td><td>20</td><td>10</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('fresh', 20, 10)">Lane</button></td></tr>
-                <tr><td><b>Fresh</b>, inside (your Game 1 line)</td><td>35</td><td>21</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('fresh', 35, 21)">Lane</button></td></tr>
-                <tr><td><b>Breaking down</b>, hooking early</td><td>30</td><td>15½</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('breakdown', 30, 15.5)">Lane</button></td></tr>
-                <tr><td><b>Burnout</b>, deep inside</td><td>38</td><td>21½</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('burnout', 38, 21.5)">Lane</button></td></tr>
+                <tr><td><b>Fresh</b>, start here</td><td>20</td><td>10</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('fresh', 20, 10)">Lane</button></td></tr>
+                <tr><td><b>Starting to go high</b></td><td>22</td><td>11½</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('transition', 22, 11.5)">Lane</button></td></tr>
+                <tr><td><b>Breaking down</b>, hooking early</td><td>27</td><td>15</td><td><button class="btn btn-secondary btn-sm" onclick="showTechLine('breakdown', 27, 15)">Lane</button></td></tr>
               </tbody>
             </table>
+            <p class="plan-note">Your logs so far: 20–22 → 10–15 struck 24 times in 63 (about 40%); deep inside lines (34–39 → 19–22) struck 3 times in 18 and mostly went light. Keep the deep inside line for when the outside line keeps going high after these moves.</p>
             <ul>
               <li><b>Line</b> is the board at the foul line, the same as in your log. Set your feet from there with your usual drift.</li>
               <li>A ½ means aim between two boards. On this pattern half a board at the arrows is the difference between light and the pocket.</li>
               <li>Between these lines, make 2-and-1 moves: follow the miss, and use <b>Next-Shot Tip</b> on the Log tab when it's stubborn.</li>
               <li>When you move left, move your <b>target</b> left too. Moving only your feet a long way with the same target sends the ball across the lane.</li>
             </ul>
-            <p class="plan-note">Lines are checked with the trajectory model (calibrated on your 2 November Classic session) and your logged results. Treat them as starting points.</p>
+            <p class="plan-note">Lines are checked with the trajectory model (calibrated on your 2, 3 and 5 November Classic sessions and your measured speed and revs) and your logged results. Treat them as starting points.</p>
           </div>
         </details>
 
@@ -848,7 +848,8 @@
     const DATA_VERSION = 2;
     const GAME_COUNT = 5;
     // Your release; recorded with each new session so exports show what you were throwing.
-    const MY_PROFILE = { speed: 16, rpm: 400, rotation: 45, tilt: 10 };
+    // Speed and revs measured from 120 fps video on 2026-11-05; rotation and tilt are still estimates.
+    const MY_PROFILE = { speed: 16.5, rpm: 335, rotation: 45, tilt: 10 };
     // Starting Line / Arrow boards for the first shot of a session (later shots copy the previous one).
     const DEFAULT_LINE = { laydown: 20, arrow: 10 };
     // First-ball result at the pins ('miss' only appears on frames logged before results had a direction).
@@ -1378,8 +1379,9 @@
       MU_DRY: 0.15,
       DT: 0.001,
       // Scales side rotation to make up for hook the simple sphere model leaves out (core
-      // dynamics / flare). 1 = no change; the 2026-11-02 Classic shots fit best without extra hook.
-      HOOK: 1
+      // dynamics / flare). 1 = no change; with the measured 16.5 mph / 335 rpm release, the
+      // 2, 3 and 5 November Classic shots fit best at 1.05.
+      HOOK: 1.05
     };
     // Factory specs (15 lb). oil / dry scale lane friction for the coverstock and finish:
     // solid and sanded covers grip the oil sooner, polyester barely grips at all.
@@ -1397,11 +1399,12 @@
     const CENTERS = {
       classic: {
         name: 'Classic Bowl', lanes: 'Brunswick', pattern: 'Brunswick Recreational (THS)',
-        oilFt: 40, volumeMl: 24.5, ratio: 11, oilEdge: 9, dryEdge: 6, laneOil: 0.9, laneDry: 1.0,
+        oilFt: 40, volumeMl: 24.5, ratio: 11, oilEdge: 9, dryEdge: 6, laneOil: 0.85, laneDry: 1.0,
         shape: 'Heavy center block, sharp drop-off from board 8 out',
-        // Calibrated against 23 on-mark Viking Conquest shots logged 2026-11-02 (fresh, oily night):
-        // the outside holds less than the sheet's 11:1 implies (≈8:1); 0.83 gave the best fit.
-        outsideCal: 0.83
+        // Calibrated against 91 Viking Conquest shots logged 2026-11-02, -03 and -05 with the
+        // measured release: a slick middle and a nearly dry outside, so misses right still come
+        // back, 20 → 10 is the fresh strike line, and deep inside lines (35 → 21) run light.
+        outsideCal: 1.6
       },
       planet: {
         name: 'Planet Bowl', lanes: 'AMF / QubicaAMF', pattern: 'AMF Standard League (THS)',
@@ -1490,8 +1493,8 @@
       return {
         laydown: readNum('tr-laydown', 25),
         arrow: readNum('tr-arrow', 15),
-        speed: Math.max(readNum('tr-speed', 16), 5),
-        rpm: Math.max(readNum('tr-rpm', 400), 0),
+        speed: Math.max(readNum('tr-speed', MY_PROFILE.speed), 5),
+        rpm: Math.max(readNum('tr-rpm', MY_PROFILE.rpm), 0),
         rotation: readNum('tr-rot', 45),
         tilt: readNum('tr-tilt', 10),
         ...laneParams(),
@@ -1722,7 +1725,10 @@
         ? Object.keys(current.parts).reduce((a, b) => (current.parts[b] < current.parts[a] ? b : a))
         : null;
       const scoreLine = `Strike score for this line: <b>${pct(current.score)}</b>/100` +
-        (weakest ? ` <span class="muted">(weakest: ${STRIKE_PART_NAMES[weakest]})</span>` : '');
+        (weakest ? ` <span class="muted">(weakest: ${STRIKE_PART_NAMES[weakest]})</span>` : '') +
+        (current.logged && current.logged.weight >= 1
+          ? `<br><span class="muted">Includes about ${Math.round(current.logged.weight)} of your logged shots near this line (${pct(current.logged.rate)}% strikes).</span>`
+          : '');
       lineFixes = result === 'Pocket' ? [] : findLineFixes(p);
       const status = result === 'Pocket'
         ? 'On target: this line carries into the pocket. Use Find Optimal Trajectory to look for a higher score.'
@@ -1769,8 +1775,48 @@
         phase: roll === null ? 0.6 : roll >= 48 ? 1 : bell(roll, 48, 6),
         breakpoint: shot.breakpoint ? bell(shot.breakpoint.b, targetBp, 2.5) * (shot.breakpoint.b < 3 ? 0.3 : 1) : 0.4
       };
-      const score = Object.keys(STRIKE_WEIGHTS).reduce((sum, k) => sum + STRIKE_WEIGHTS[k] * parts[k], 0);
-      return { score, shot, parts, missBoards, targetBp };
+      const modelScore = Object.keys(STRIKE_WEIGHTS).reduce((sum, k) => sum + STRIKE_WEIGHTS[k] * parts[k], 0);
+      const logged = loggedStrikes(p);
+      // Your own strikes take over from the model as logged shots on this line build up.
+      const score = logged.weight
+        ? (LOGGED_PRIOR * modelScore + logged.weight * Math.min(logged.rate / LOGGED_GOOD_RATE, 1)) / (LOGGED_PRIOR + logged.weight)
+        : modelScore;
+      return { score, modelScore, logged, shot, parts, missBoards, targetBp };
+    }
+
+    // Logged first balls (saved sessions) with a line and arrow, cached until the history changes.
+    let loggedShotsRaw = null;
+    let loggedShots = [];
+    function getLoggedShots() {
+      let raw = null;
+      try { raw = localStorage.getItem('bowling_history'); } catch (e) {}
+      if (raw === loggedShotsRaw) return loggedShots;
+      loggedShotsRaw = raw;
+      loggedShots = [];
+      getHistory().forEach(s => Object.values(s.games).forEach(g => Object.values(g.frames).forEach(fr => {
+        const laydown = parseFloat(fr.laydown), arrow = parseFloat(fr.arrow);
+        if (!fr.b1 || !Number.isFinite(laydown) || !Number.isFinite(arrow)) return;
+        loggedShots.push({ centerId: s.centerId, ball: g.ball, status: g.status, laydown, arrow, strike: fr.b1 === 'X' });
+      })));
+      return loggedShots;
+    }
+
+    // Model score counts as this many logged shots; a 60% strike rate on a line counts as a perfect score.
+    const LOGGED_PRIOR = 4;
+    const LOGGED_GOOD_RATE = 0.6;
+
+    // Strike rate of your logged shots near this line with the same ball at the same center, weighted
+    // by closeness (about 2 boards at the foul line, 1 at the arrows) and half weight for other lane statuses.
+    function loggedStrikes(p) {
+      let weight = 0, strikes = 0;
+      getLoggedShots().forEach(sh => {
+        if (sh.centerId !== p.centerKey || BALLS[sh.ball] !== p.ball) return;
+        const w = Math.exp(-0.5 * (((sh.laydown - p.laydown) / 2) ** 2 + ((sh.arrow - p.arrow) / 1) ** 2))
+          * (sh.status === p.statusKey ? 1 : 0.5);
+        weight += w;
+        if (sh.strike) strikes += w;
+      });
+      return { weight, rate: weight ? strikes / weight : 0 };
     }
 
     // Tries every target at the arrows, finds the foul-line board that carries each one to the
@@ -1834,6 +1880,9 @@
         ['Phase', phase, best.parts.phase],
         ['Exit board', s.breakpoint ? `${s.breakpoint.b.toFixed(1)} at ${ft(bpIn)} (target ≈ ${best.targetBp})` : 'None', best.parts.breakpoint]
       ];
+      if (best.logged.weight >= 1) {
+        rows.push(['Your results', `${pct(best.logged.rate)}% strikes from about ${Math.round(best.logged.weight)} logged shots near this line`, Math.min(best.logged.rate / LOGGED_GOOD_RATE, 1)]);
+      }
       const centerLabel = CENTERS[p.centerKey] ? CENTERS[p.centerKey].name : 'Custom pattern';
       panel.innerHTML = `
         <div class="opt-head">
@@ -1913,6 +1962,12 @@
         if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === saved[id])) return;
         el.value = saved[id];
       });
+      // Inputs saved under an earlier My Profile move to the measured one.
+      const OLD_PROFILES = [['16', '400'], ['16.5', '410']];
+      if (OLD_PROFILES.some(([speed, rpm]) => saved['tr-speed'] === speed && saved['tr-rpm'] === rpm)) {
+        document.getElementById('tr-speed').value = MY_PROFILE.speed;
+        document.getElementById('tr-rpm').value = MY_PROFILE.rpm;
+      }
     }
 
     window.setLaneStatus = function(key) {
