@@ -231,6 +231,7 @@
             <label>Center</label>
             <select id="session-center-id" onchange="onSessionCenter()">
               <option value="classic">Classic Bowl</option>
+              <option value="classicPublic">Classic Bowl (public lanes)</option>
               <option value="planet">Planet Bowl</option>
               <option value="other">Other</option>
             </select>
@@ -345,6 +346,7 @@
             <label>Center</label>
             <select id="tr-center" onchange="onTrajInput()">
               <option value="classic">Classic Bowl</option>
+              <option value="classicPublic">Classic Bowl (public lanes)</option>
               <option value="planet">Planet Bowl</option>
               <option value="custom">Custom pattern</option>
             </select>
@@ -420,6 +422,7 @@
         <select id="st-center" onchange="calcAnalytics()">
           <option value="all">All centers</option>
           <option value="classic">Classic Bowl</option>
+          <option value="classicPublic">Classic Bowl (public lanes)</option>
           <option value="planet">Planet Bowl</option>
           <option value="other">Other</option>
         </select>
@@ -890,6 +893,11 @@
       const legacy = !s.v;
       if (!s.centerId) s.centerId = /planet/i.test(s.center || '') ? 'planet' : /classic/i.test(s.center || '') ? 'classic' : 'other';
       s.games = s.games || {};
+      // The 9 Nov 2026 session was on the public lanes and both games were carrydown.
+      if (s.id === 1794258630848 && s.centerId === 'classic') {
+        s.centerId = 'classicPublic';
+        if (s.games[1]) s.games[1].status = 'carrydown';
+      }
       for (let g = 1; g <= GAME_COUNT; g++) {
         s.games[g] = s.games[g] || { frames: {} };
         if (!BALLS[s.games[g].ball]) s.games[g].ball = 'viking';
@@ -1418,6 +1426,15 @@
         // measured release: a slick middle and a nearly dry outside, so misses right still come
         // back, 20 → 10 is the fresh strike line, and deep inside lines (35 → 21) run light.
         outsideCal: 1.6
+      },
+      // The public (non-league) lanes at Classic: heavier through the middle and less dry outside.
+      // Rough fit to the 2 games logged 2026-11-09 (25 → 15 went light, 15 → 10 and 8 → 5 struck);
+      // logged shots at this center steer the line more than this profile until there are more of them.
+      classicPublic: {
+        name: 'Classic Bowl (public lanes)', lanes: 'Brunswick', pattern: 'Public house shot (not measured)',
+        oilFt: 44, volumeMl: 24.5, ratio: 11, oilEdge: 6, dryEdge: 2, laneOil: 0.85, laneDry: 1.0,
+        shape: 'Heavy middle; play well right (about 8 → 5) once it carries down',
+        outsideCal: 0.7
       },
       planet: {
         name: 'Planet Bowl', lanes: 'AMF / QubicaAMF', pattern: 'AMF Standard League (THS)',
